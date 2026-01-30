@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>十天衆限界超越・統合管理ツール</title>
+    <style>
+        :root { --bg: #f0f4f8; --card: #ffffff; --primary: #3498db; --fire: #ff4d4d; --water: #3399ff; --earth: #b37700; --wind: #2eb82e; --light: #e6b800; --dark: #9933ff; --success: #2ecc71; --danger: #e74c3c; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; font-size: 12px; color: #333; }
+        .container { max-width: 900px; margin: auto; }
+        .card { background: var(--card); padding: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; position: relative; overflow: hidden; }
+        h2 { border-left: 4px solid var(--primary); padding-left: 8px; font-size: 1rem; margin: 0 0 10px 0; }
+        
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+        .char-item { border: 1px solid #ddd; padding: 8px; border-radius: 6px; background: #fff; position: relative; border-top: 4px solid #ccc; }
+        .char-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .char-name { font-weight: bold; font-size: 0.9rem; }
+        
+        .char-item.finished { background: #f8f9fa; opacity: 0.7; }
+        .char-item.finished::after { content: "COMPLETE"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-20deg); color: rgba(46, 204, 113, 0.4); font-weight: bold; font-size: 1.4rem; border: 3px solid; padding: 2px 8px; pointer-events: none; z-index: 10; }
+
+        .attr-fire { border-top-color: var(--fire); } .attr-water { border-top-color: var(--water); }
+        .attr-earth { border-top-color: var(--earth); } .attr-wind { border-top-color: var(--wind); }
+        .attr-light { border-top-color: var(--light); } .attr-dark { border-top-color: var(--dark); }
+
+        .tabs { display: flex; overflow-x: auto; gap: 4px; margin-bottom: 10px; }
+        .tab-btn { padding: 6px 14px; border: none; border-radius: 15px; background: #ddd; cursor: pointer; white-space: nowrap; }
+        .tab-btn.active { background: var(--primary); color: white; }
+
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+        input[type="number"] { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+
+        /* 集計結果テーブルの強化 */
+        .result-section { margin-top: 15px; }
+        .category-head { background: #eee; padding: 4px 8px; font-weight: bold; font-size: 0.85rem; border-radius: 4px; margin: 10px 0 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+        th, td { padding: 6px 8px; text-align: left; font-size: 0.85rem; border-bottom: 1px solid #f0f0f0; }
+        th { color: #666; font-weight: normal; font-size: 0.75rem; }
+        .col-name { width: 50%; }
+        .col-need { width: 25%; text-align: right; }
+        .col-short { width: 25%; text-align: right; }
+        
+        .status-ok { color: #aaa; }
+        .status-ng { color: var(--danger); font-weight: bold; }
+        .check-mark { color: var(--success); margin-right: 4px; }
+
+        .file-controls { display: flex; gap: 10px; margin-top: 5px; }
+        .btn { border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; }
+        .save-btn { background: var(--success); color: white; width: 100%; margin-top: 15px; font-size: 1rem; padding: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>① ファイルバックアップ</h2>
+        <div class="file-controls">
+            <button class="btn" style="background:#555; color:white;" onclick="downloadFile()">設定を保存</button>
+            <label class="btn" style="background:#555; color:white;">読込<input type="file" style="display:none" accept=".json" onchange="uploadFile(event)"></label>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>② 各キャラの進捗設定</h2>
+        <div class="char-grid" id="char-settings"></div>
+    </div>
+
+    <div class="card">
+        <h2>③ 素材の所持数入力</h2>
+        <div class="tabs" id="attr-tabs">
+            <button class="tab-btn active" onclick="switchInputTab('Common')">共通</button>
+            <button class="tab-btn" onclick="switchInputTab('火')">火</button>
+            <button class="tab-btn" onclick="switchInputTab('水')">水</button>
+            <button class="tab-btn" onclick="switchInputTab('土')">土</button>
+            <button class="tab-btn" onclick="switchInputTab('風')">風</button>
+            <button class="tab-btn" onclick="switchInputTab('光')">光</button>
+            <button class="tab-btn" onclick="switchInputTab('闇')">闇</button>
+        </div>
+        <div class="input-grid" id="stock-inputs"></div>
+    </div>
+
+    <div class="card">
+        <h2>④ 不足素材の集計結果</h2>
+        <div id="result-container"></div>
+    </div>
+
+    <button class="btn save-btn" onclick="saveToStorage()">ブラウザに保存（確定）</button>
+</div>
+
+<script>
+    const STORAGE_KEY = 'GBF_TEN_TRANS_APP_DATA';
+    const characters = [
+        {n:"ウーノ", a:"水", anima:"黒麒麟"}, {n:"ソーン", a:"光", anima:"黄龍"}, 
+        {n:"サラーサ", a:"土", anima:"黄龍"}, {n:"カトル", a:"水", anima:"黒麒麟"},
+        {n:"フュンフ", a:"光", anima:"黄龍"}, {n:"シス", a:"闇", anima:"黒麒麟"}, 
+        {n:"シエテ", a:"風", anima:"黒麒麟"}, {n:"オクトー", a:"土", anima:"黄龍"},
+        {n:"ニオ", a:"風", anima:"黄龍"}, {n:"エッセル", a:"火", anima:"黒麒麟"}
+    ];
+
+    const commonMats = ["ルピ", "ヒヒイロカネ", "碧麗の証", "ダマスカス骸晶", "星晶の欠片", "究竟の証", "JP", "栄光の証", "覇者の証", "宝晶石", "黄龍のアニマ", "黒麒麟のアニマ", "終末の暗晶", "漆黒の棘翅", "狡知の魔角", "バハ角", "真龍の金鱗"];
+    const attrMats = ["真なるアニマ", "銀片", "六竜素材", "光輪", "マグナIIアニマ", "プシュケー", "武器エレ", "属性エレ", "竜珠", "ブライト", "下位宝珠", "ジーン", "朽ち武器(無凸)", "天星器(無凸)"];
+
+    const masterData = {
+        110: { common:{"ルピ":100000, "ダマスカス骸晶":20, "ヒヒイロカネ":1, "星晶の欠片":7500}, attr:{"六竜素材":50, "光輪":80, "銀片":200, "下位宝珠":7500, "ジーン":7500, "朽ち武器(無凸)":120} },
+        120: { common:{"ルピ":5000000, "究竟の証":100, "JP":20000, "栄光の証":1500, "覇者の証":300, "宝晶石":1000, "バハ角":100}, attr:{"真なるアニマ":30, "マグナIIアニマ":50, "プシュケー":300, "下位宝珠":2500, "ジーン":2500, "朽ち武器(無凸)":40, "天星器(無凸)":40} },
+        130: { common:{"碧麗の証":1} },
+        140: { common:{"ルピ":5000000, "真龍の金鱗":50}, attr:{"ブライト":30, "武器エレ":2000, "属性エレ":2000, "竜珠":300} },
+        150: { common:{"終末の暗晶":30, "漆黒の棘翅":30, "狡知の魔角":30, "碧麗の証":1} }
+    };
+
+    let appData = { chars: {}, stocks: {} };
+    let activeTab = 'Common';
+
+    function loadFromStorage() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) { try { appData = JSON.parse(saved); } catch(e) {} }
+        renderSettings();
+    }
+
+    function renderSettings() {
+        const charSettings = document.getElementById('char-settings');
+        charSettings.innerHTML = '';
+        characters.forEach(c => {
+            if (!appData.chars[c.n]) appData.chars[c.n] = {cur:100, tar:100, fin:false};
+            const d = appData.chars[c.n];
+            const attrClass = {火:'fire',水:'water',土:'earth',風:'wind',光:'light',闇:'dark'}[c.a];
+            charSettings.innerHTML += `
+                <div class="char-item attr-${attrClass} ${d.fin ? 'finished' : ''}">
+                    <div class="char-header"><span class="char-name">${c.n}</span><input type="checkbox" onchange="toggleFinish('${c.n}', this.checked)" ${d.fin ? 'checked' : ''}></div>
+                    <div class="sel-box">
+                        <select onchange="updateChar('${c.n}', 'cur', this.value)" ${d.fin ? 'disabled' : ''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.cur==v?'selected':''}>${v}</option>`)}</select>
+                        <span>▶</span>
+                        <select onchange="updateChar('${c.n}', 'tar', this.value)" ${d.fin ? 'disabled' : ''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.tar==v?'selected':''}>${v}</option>`)}</select>
+                    </div>
+                </div>`;
+        });
+        switchInputTab(activeTab);
+        calculate();
+    }
+
+    function updateChar(name, key, val) { appData.chars[name][key] = parseInt(val); calculate(); }
+    function toggleFinish(name, checked) { appData.chars[name].fin = checked; renderSettings(); }
+    function switchInputTab(tab) {
+        activeTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText === tab));
+        const container = document.getElementById('stock-inputs');
+        container.innerHTML = '';
+        const list = (tab === 'Common') ? commonMats : attrMats;
+        list.forEach(m => {
+            const id = tab === 'Common' ? m : `${tab}-${m}`;
+            const val = appData.stocks[id] || 0;
+            container.innerHTML += `<div><label style="display:block;margin-bottom:2px">${m}</label><input type="number" value="${val}" oninput="updateStock('${id}', this.value)"></div>`;
+        });
+    }
+    function updateStock(id, val) { appData.stocks[id] = parseInt(val) || 0; calculate(); }
+
+    function calculate() {
+        const needed = {};
+        characters.forEach(c => {
+            const d = appData.chars[c.n];
+            if (d.fin || d.tar <= d.cur) return;
+            for (let lv in masterData) {
+                const lvNum = parseInt(lv);
+                if (lvNum > d.cur && lvNum <= d.tar) {
+                    for (let m in masterData[lv].common) needed[m] = (needed[m] || 0) + masterData[lv].common[m];
+                    for (let m in masterData[lv].attr) {
+                        const key = `${c.a}-${m}`;
+                        needed[key] = (needed[key] || 0) + masterData[lv].attr[m];
+                    }
+                    if (lvNum === 140) {
+                        const animaKey = `${c.anima}のアニマ`;
+                        needed[animaKey] = (needed[animaKey] || 0) + 30;
+                    }
+                }
+            }
+        });
+
+        const container = document.getElementById('result-container');
+        container.innerHTML = '';
+
+        const categories = ["共通", "火", "水", "土", "風", "光", "闇"];
+        categories.forEach(cat => {
+            const items = Object.keys(needed).filter(key => {
+                if (cat === "共通") return commonMats.includes(key) || key.includes("アニマ") && !key.includes("-");
+                return key.startsWith(cat + "-");
+            });
+
+            if (items.length > 0) {
+                let html = `<div class="category-head">${cat}</div><table><thead><tr><th class="col-name">素材名</th><th class="col-need">必要</th><th class="col-short">不足</th></tr></thead><tbody>`;
+                items.sort().forEach(key => {
+                    const stock = appData.stocks[key] || 0;
+                    const diff = needed[key] - stock;
+                    const displayName = key.includes("-") ? key.split("-")[1] : key;
+                    html += `<tr class="${diff <= 0 ? 'status-ok' : 'status-ng'}">
+                        <td class="col-name">${diff <= 0 ? '<span class="check-mark">✓</span>' : ''}${displayName}</td>
+                        <td class="col-need">${needed[key].toLocaleString()}</td>
+                        <td class="col-short">${diff <= 0 ? '-' : diff.toLocaleString()}</td>
+                    </tr>`;
+                });
+                html += `</tbody></table>`;
+                container.innerHTML += html;
+            }
+        });
+    }
+
+    function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(appData)); alert("保存しました。"); }
+    function downloadFile() {
+        const blob = new Blob([JSON.stringify(appData, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = "gbf_transcend_data.json"; a.click();
+    }
+    function uploadFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => { try { appData = JSON.parse(e.target.result); renderSettings(); } catch(err) { alert("失敗"); } };
+        reader.readAsText(file);
+    }
+    loadFromStorage();
+</script>
+</body>
+</html>
