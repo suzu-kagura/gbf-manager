@@ -15,29 +15,25 @@
             --accent: #2c3e50; --needed: #e74c3c;
         }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 60px; }
-        
-        .tab-menu { 
-            position: fixed; top: 0; left: 0; right: 0; 
-            display: flex; justify-content: center; gap: 8px; 
-            padding: 10px; background: #f0f2f5; z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
+        .tab-menu { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 8px; padding: 10px; background: #f0f2f5; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
         .tab-btn.active { background: var(--accent); color: white; }
         
-        .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 10px; }
+        .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
         .calc-box { text-align: center; min-width: 90px; }
-        .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; }
-        .val { font-size: 1.5em; font-weight: bold; }
+        .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; font-weight: bold; }
+        .val { font-size: 1.4em; font-weight: bold; }
         .needed-val { color: var(--needed); }
-        .stock-input { font-size: 1.3em; width: 80px; text-align: center; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; }
+        .stock-input { font-size: 1.2em; width: 80px; text-align: center; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; padding: 4px; }
         
+        /* タブごとの表示制御 */
+        .shoukaku-only { display: none; }
+        body.tab-shoukaku .shoukaku-only { display: block; }
         body.tab-tense .header-stock-box, body.tab-tense .header-needed-box { display: none; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #ddd; overflow: hidden; position: relative; }
         .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
-        
         .attr-火 { background-color: var(--fire); } .attr-火::before { background-color: var(--fire-line); }
         .attr-水 { background-color: var(--water); } .attr-水::before { background-color: var(--water-line); }
         .attr-土 { background-color: var(--earth); } .attr-土::before { background-color: var(--earth-line); }
@@ -52,9 +48,8 @@
         input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
         
         .card-calc { margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; }
-        .card-stock-input { width: 55px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; background: #fff; }
+        .card-stock-input { width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; }
         .card-result { font-weight: bold; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 10px; }
-        .weapon-needed { margin-top: 5px; color: #2980b9; font-weight: bold; font-size: 0.9em; line-height: 1.4; }
         .txt-red { color: var(--needed); }
         .stock-label { font-size: 0.75em; color: #666; display: block; margin-top: 2px; }
     </style>
@@ -68,10 +63,16 @@
 </div>
 
 <div class="header">
-    <div class="calc-box"><label id="header-total-label">未完了合計</label><div class="val" id="grand-total">0</div></div>
-    <div class="calc-box header-stock-box"><label>所持数</label><input type="number" id="stock" class="stock-input" value="0" oninput="saveData()"></div>
+    <div class="calc-box"><label id="header-total-label">目標晶核</label><div class="val" id="grand-total">0</div></div>
+    
+    <div class="calc-box shoukaku-only"><label>武器所持晶核</label><div class="val" id="weapon-conv-val">0</div></div>
+    
+    <div class="calc-box header-stock-box">
+        <label id="header-stock-label">所持晶核</label>
+        <input type="number" id="stock" class="stock-input" value="0" oninput="saveData()">
+    </div>
+    
     <div class="calc-box header-needed-box"><label>不足分</label><div class="val needed-val" id="needed-total">0</div></div>
-    <div class="calc-box"><label id="unit-label">古戦場換算</label><div class="val" id="gw-count">0</div></div>
 </div>
 
 <div id="main-container" class="grid"></div>
@@ -104,41 +105,26 @@
                     [5,5,10,20,20,30].forEach((c, ci) => html += `<label><input type="checkbox" class="q-check" data-cost="${c}" id="q-${i}-${si}-${ci}" onchange="saveData()">礎:${ci}凸(${c})</label>`);
                     html += `<label><input type="checkbox" class="q-check" data-cost="30" id="q-${i}-${si}-abi" onchange="saveData()">4アビ(30)</label></div>`;
                 });
-                html += `<div class="group-title">共通</div><div class="item-grid">`;
-                ["終末(神)","終末(マ)","破壊"].forEach(n => html += `<label><input type="checkbox" class="q-check" data-cost="20" id="q-${i}-${n}" onchange="saveData()">${n}(20)</label>`);
-                html += `</div></div>`;
+                html += `</div>`;
                 container.innerHTML += html;
             });
         } 
         else if (currentTab === 'shoukaku') {
             weaponMaster.forEach((m, i) => {
                 let html = `<div class="card attr-${m.a}"><h3>極星器：${m.wt}</h3><div class="item-grid">`;
-                const steps = [{l:"4凸解放", c:45}, {l:"5凸解放", c:80}, {l:"覚醒強化", c:170}];
+                const steps = [{l:"3凸作成(掘り)", c:45}, {l:"4凸解放", c:45}, {l:"5凸解放", c:80}, {l:"覚醒強化", c:170}];
                 steps.forEach((s, si) => html += `<label><input type="checkbox" class="q-check" data-cost="${s.c}" id="s-${i}-${si}" onchange="saveData()">${s.l}(${s.c})</label>`);
-                html += `</div></div>`;
+                html += `</div><div class="card-calc"><div><span class="stock-label">所持本数(無凸)</span><input type="number" id="sstock-${i}" class="card-stock-input" value="0" min="0" oninput="saveData()"> 本</div><div class="card-result">不足:<span id="sdiff-${i}" class="txt-red">0</span>個</div></div></div>`;
                 container.innerHTML += html;
             });
         }
         else if (currentTab === 'tense') {
             weaponMaster.forEach((t) => {
-                let html = `<div class="card attr-${t.a}"><h3>${t.n} (${t.j})</h3>`;
-                html += `<div class="item-grid">`;
+                let html = `<div class="card attr-${t.a}"><h3>${t.n} (${t.j})</h3><div class="item-grid">`;
                 html += `<label><input type="checkbox" class="q-check" data-cost="50" id="t-${t.id}-c" onchange="saveData()">超越Lv120解放 (50)</label>`;
                 html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-k4" onchange="saveData()">極星器 4凸 (20)</label>`;
-                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-k5" onchange="saveData()">極星器 5凸 (20)</label>`;
-                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-l" onchange="saveData()">極星の光跡 Lv4強化 (20)</label>`;
-                html += `</div>`;
-                html += `<div class="card-calc">
-                            <div>
-                                <span class="stock-label">所持本数(無凸)</span>
-                                <input type="number" id="stock-${t.id}" class="card-stock-input" value="0" oninput="saveData()"> 本
-                                <div style="margin-top:8px">必要欠片:<span id="need-${t.id}">0</span></div>
-                            </div>
-                            <div class="card-result">
-                                <div>不足欠片:<span id="diff-${t.id}" class="txt-red">0</span></div>
-                                <div class="weapon-needed">あと:${t.w}<br><span id="weap-${t.id}">0</span>本（追加分）</div>
-                            </div>
-                         </div></div>`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-l" onchange="saveData()">光跡武器 Lv4強化 (20)</label></div>`;
+                html += `<div class="card-calc"><div><span class="stock-label">所持(無凸)</span><input type="number" id="tstock-${t.id}" class="card-stock-input" value="0" min="0" oninput="saveData()"> 本</div><div class="card-result">不足:<span id="tdiff-${t.id}" class="txt-red">0</span><br>要:<span id="tweap-${t.id}">0</span>本</div></div></div>`;
                 container.innerHTML += html;
             });
         }
@@ -150,97 +136,72 @@
         document.body.className = 'tab-' + tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + tab).classList.add('active');
-        const unitLabel = document.getElementById('unit-label');
-        const headerTotalLabel = document.getElementById('header-total-label');
-        if(tab === 'tense') {
-            unitLabel.textContent = '必要欠片(全体)';
-            headerTotalLabel.textContent = '全体必要数';
+        
+        const hLabel = document.getElementById('header-total-label');
+        const sLabel = document.getElementById('header-stock-label');
+        
+        if(tab === 'shoukaku') {
+            hLabel.textContent = '目標晶核';
+            sLabel.textContent = '所持晶核';
+        } else if(tab === 'tense') {
+            hLabel.textContent = '未完了合計';
         } else {
-            unitLabel.textContent = tab === 'quartz' ? '古戦場換算' : '必要個数';
-            headerTotalLabel.textContent = '未完了合計';
+            hLabel.textContent = '未完了合計';
+            sLabel.textContent = '所持数';
         }
-        window.scrollTo(0, 0);
         render();
     }
 
     function saveData() {
         let grandTotal = 0;
-        const checks = JSON.parse(localStorage.getItem('gbf_all_checks') || '{}');
-        const cardStocks = JSON.parse(localStorage.getItem('gbf_card_stocks') || '{}');
+        const checks = JSON.parse(localStorage.getItem('gbf_checks_v2') || '{}');
+        const stocks = JSON.parse(localStorage.getItem('gbf_stocks_v2') || '{}');
 
-        document.querySelectorAll('.q-check').forEach(cb => {
-            checks[cb.id] = cb.checked;
-        });
+        document.querySelectorAll('.q-check').forEach(cb => { checks[cb.id] = cb.checked; if(!cb.checked) grandTotal += parseInt(cb.dataset.cost); });
 
-        Object.keys(checks).forEach(id => {
-            if (!checks[id]) {
-                const el = document.getElementById(id);
-                if (el) grandTotal += parseInt(el.dataset.cost);
-            }
-        });
+        let weaponConv = 0;
+        if (currentTab === 'shoukaku') {
+            weaponMaster.forEach((m, i) => {
+                const count = parseInt(document.getElementById(`sstock-${i}`).value) || 0;
+                stocks[`s-${i}`] = count;
+                weaponConv += count * 15;
+                let cardNeed = 0;
+                [0,1,2,3].forEach(si => { const cb = document.getElementById(`s-${i}-${si}`); if(cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost); });
+                document.getElementById(`sdiff-${i}`).textContent = Math.max(0, cardNeed - (count * 15));
+            });
+            document.getElementById('weapon-conv-val').textContent = weaponConv;
+        }
 
-		// saveData関数内の天星の欠片計算ロジックのみ抜粋・修正
-		if (currentTab === 'tense') {
-		    weaponMaster.forEach(t => {
-		        let cardNeed = 0;
-		        [t.id + '-c', t.id + '-k4', t.id + '-k5', t.id + '-l'].forEach(suffix => {
-		            const cb = document.getElementById('t-' + suffix);
-		            if (cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost);
-		        });
-		        
-		        const sInput = document.getElementById(`stock-${t.id}`);
-		        const weaponStock = sInput ? (parseInt(sInput.value) || 0) : 0;
-		        cardStocks[t.id] = weaponStock;
-		        
-		        // 1. 4枚セットから欠片数を算出（9本なら2セットで10個）
-		        const validTenseCrystals = Math.floor(weaponStock / 4) * 5;
-		        
-		        // 2. 目標から有効な欠片を引いて「不足欠片数」を出す（50 - 10 = 40個）
-		        const diffCrystals = Math.max(0, cardNeed - validTenseCrystals);
-		        
-		        // 3. 不足欠片に必要な「本来の本数」から「倉庫の余り」を引く
-		        // (40 / 5 * 4) = 32本。ここから余りの1本を引いて 31本
-		        const extraWeapons = weaponStock % 4;
-		        const totalNeededWeapons = Math.max(0, (Math.ceil(diffCrystals / 5) * 4) - extraWeapons);
-		        
-		        if(document.getElementById(`need-${t.id}`)) {
-		            document.getElementById(`need-${t.id}`).textContent = cardNeed;
-		            document.getElementById(`diff-${t.id}`).textContent = diffCrystals;
-		            document.getElementById(`weap-${t.id}`).textContent = totalNeededWeapons;
-		        }
-		    });
-		}
+        if (currentTab === 'tense') {
+            weaponMaster.forEach(t => {
+                const count = parseInt(document.getElementById(`tstock-${t.id}`).value) || 0;
+                stocks[`t-${t.id}`] = count;
+                let need = 0;
+                [t.id+'-c', t.id+'-k4', t.id+'-l'].forEach(id => { const cb = document.getElementById('t-'+id); if(cb && !cb.checked) need += parseInt(cb.dataset.cost); });
+                const validKake = Math.floor(count / 4) * 5;
+                const diffKake = Math.max(0, need - validKake);
+                const addWeap = Math.max(0, (Math.ceil(diffKake / 5) * 4) - (count % 4));
+                document.getElementById(`tdiff-${t.id}`).textContent = diffKake;
+                document.getElementById(`tweap-${t.id}`).textContent = addWeap;
+            });
+        }
 
-        localStorage.setItem('gbf_all_checks', JSON.stringify(checks));
-        localStorage.setItem('gbf_card_stocks', JSON.stringify(cardStocks));
+        localStorage.setItem('gbf_checks_v2', JSON.stringify(checks));
+        localStorage.setItem('gbf_stocks_v2', JSON.stringify(stocks));
         document.getElementById('grand-total').textContent = grandTotal;
         
-        if (currentTab !== 'tense') {
-            const stock = parseInt(document.getElementById('stock').value) || 0;
-            localStorage.setItem(`gbf_stock_${currentTab}`, stock);
-            const needed = Math.max(0, grandTotal - stock);
-            document.getElementById('needed-total').textContent = needed;
-            document.getElementById('gw-count').textContent = currentTab === 'quartz' ? Math.ceil(needed / 45) + "回分" : needed + "個";
-        } else {
-            document.getElementById('gw-count').textContent = grandTotal + "個";
-        }
+        const headStock = parseInt(document.getElementById('stock').value) || 0;
+        localStorage.setItem(`gbf_head_stock_${currentTab}`, headStock);
+        document.getElementById('needed-total').textContent = Math.max(0, grandTotal - (headStock + weaponConv));
     }
 
     function loadData() {
-        const checks = JSON.parse(localStorage.getItem('gbf_all_checks') || '{}');
-        const cardStocks = JSON.parse(localStorage.getItem('gbf_card_stocks') || '{}');
-        document.querySelectorAll('.q-check').forEach(cb => {
-            if (checks[cb.id] !== undefined) cb.checked = checks[cb.id];
-        });
-        if (currentTab === 'tense') {
-            weaponMaster.forEach(t => {
-                const sInput = document.getElementById('stock-' + t.id);
-                if (sInput && cardStocks[t.id] !== undefined) sInput.value = cardStocks[t.id];
-            });
-        } else {
-            const stockEl = document.getElementById('stock');
-            if (stockEl) stockEl.value = localStorage.getItem(`gbf_stock_${currentTab}`) || 0;
-        }
+        const checks = JSON.parse(localStorage.getItem('gbf_checks_v2') || '{}');
+        const stocks = JSON.parse(localStorage.getItem('gbf_stocks_v2') || '{}');
+        document.querySelectorAll('.q-check').forEach(cb => { if(checks[cb.id] !== undefined) cb.checked = checks[cb.id]; });
+        if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { const el = document.getElementById(`sstock-${i}`); if(el) el.value = stocks[`s-${i}`] || 0; });
+        if(currentTab === 'tense') weaponMaster.forEach(t => { const el = document.getElementById(`tstock-${t.id}`); if(el) el.value = stocks[`t-${t.id}`] || 0; });
+        document.getElementById('stock').value = localStorage.getItem(`gbf_head_stock_${currentTab}`) || 0;
         saveData();
     }
     render();
