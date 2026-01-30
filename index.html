@@ -5,58 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GBF管理ツール</title>
     <style>
-        /* --- 統合基盤スタイル --- */
         :root {
-            --gbf-blue: #2a82b9;
-            --gbf-dark: #1a2430;
-            --gbf-gold: #e1ad5f;
-            --bg-color: #f0f2f5;
-            --fire: #ff4d4d; --fire-bg: #ffeded;
-            --water: #3399ff; --water-bg: #e3f2fd;
-            --earth: #b37700; --earth-bg: #fdf5e6;
-            --wind: #2eb82e; --wind-bg: #e8f5e9;
-            --light: #fbc02d; --light-bg: #fffde7;
-            --dark: #9c27b0; --dark-bg: #f3e5f5;
+            --gbf-blue: #2a82b9; --gbf-dark: #1a2430; --gbf-gold: #e1ad5f; --bg-color: #f0f2f5;
+            --fire: #ff4d4d; --fire-bg: #ffeded; --water: #3399ff; --water-bg: #e3f2fd;
+            --earth: #b37700; --earth-bg: #fdf5e6; --wind: #2eb82e; --wind-bg: #e8f5e9;
+            --light: #fbc02d; --light-bg: #fffde7; --dark: #9c27b0; --dark-bg: #f3e5f5;
             --danger: #e74c3c; --success: #2ecc71;
         }
-
-        body {
-            font-family: sans-serif;
-            background: var(--bg-color);
-            margin: 0; padding: 0; padding-bottom: 80px;
-            color: #333;
-        }
-
-        /* 下部ナビゲーション */
-        .main-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
-            background: var(--gbf-dark); display: flex; z-index: 10000;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-        }
-        .nav-btn {
-            flex: 1; border: none; background: none; color: #888;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 12px; cursor: pointer;
-        }
+        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding-bottom: 80px; color: #333; }
+        .main-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: var(--gbf-dark); display: flex; z-index: 10000; box-shadow: 0 -2px 10px rgba(0,0,0,0.3); }
+        .nav-btn { flex: 1; border: none; background: none; color: #888; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; cursor: pointer; }
         .nav-btn.active { color: var(--gbf-gold); }
         .nav-btn .icon { font-size: 24px; margin-bottom: 2px; }
-
         .app-section { display: none; animation: fadeIn 0.3s ease; }
         .app-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* --- Tool 1 (Manager) 専用 --- */
+        /* Manager Style */
         .tab-menu { display: flex; justify-content: center; gap: 5px; padding: 10px; background: #fff; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
-        .sub-tab { padding: 8px 12px; border: none; border-radius: 20px; background: #ddd; font-size: 11px; font-weight: bold; }
+        .sub-tab { padding: 8px 12px; border: none; border-radius: 20px; background: #ddd; font-size: 11px; font-weight: bold; cursor: pointer; }
         .sub-tab.active { background: var(--gbf-dark); color: white; }
-        .backup-btn { background: #666; color: #fff; font-size: 10px; padding: 8px 10px; border-radius: 6px; border: none; font-weight: bold; }
-        
+        .backup-btn { background: #666; color: #fff; font-size: 10px; padding: 8px 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; }
         .header-box { background: white; margin: 10px; padding: 15px; border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .val-unit { text-align: center; }
         .val-unit label { font-size: 10px; color: #666; display: block; }
         .val-num { font-size: 1.2em; font-weight: bold; }
         .val-num.red { color: var(--danger); }
-        
         .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; padding: 10px; }
         .m-card { background: white; border-radius: 8px; padding: 12px; border-top: 5px solid #ccc; }
         .m-card.火 { border-color: var(--fire); background: var(--fire-bg); }
@@ -65,48 +39,31 @@
         .m-card.風 { border-color: var(--wind); background: var(--wind-bg); }
         .m-card.光 { border-color: var(--light); background: var(--light-bg); }
         .m-card.闇 { border-color: var(--dark); background: var(--dark-bg); }
-        .item-list label { display: flex; align-items: center; padding: 8px; background: rgba(255,255,255,0.7); border-radius: 4px; font-size: 13px; margin-bottom: 2px; }
+        .item-list label { display: flex; align-items: center; padding: 8px; background: rgba(255,255,255,0.7); border-radius: 4px; font-size: 13px; margin-bottom: 2px; cursor: pointer; }
 
-        /* --- Tool 2 (Trans) 専用 --- */
+        /* Trans Style */
         .t-container { padding: 10px; }
         .t-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-        
-        /* COMPLETEスタンプのスタイル */
         .char-item { border: 1px solid #eee; padding: 10px; border-radius: 8px; border-top: 4px solid #ccc; position: relative; overflow: hidden; }
         .char-item.finished { background: #f8f9fa; opacity: 0.7; }
-        .char-item.finished::after { 
-            content: "COMPLETE"; 
-            position: absolute; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%) rotate(-20deg); 
-            color: rgba(46, 204, 113, 0.4); 
-            font-weight: bold; font-size: 1.4rem; 
-            border: 3px solid; padding: 2px 8px; 
-            pointer-events: none; z-index: 10; 
-        }
-
+        .char-item.finished::after { content: "COMPLETE"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-20deg); color: rgba(46, 204, 113, 0.4); font-weight: bold; font-size: 1.4rem; border: 3px solid; padding: 2px 8px; pointer-events: none; z-index: 10; }
         .t-tabs { display: flex; overflow-x: auto; gap: 5px; padding: 5px 0; }
-        .t-tab-btn { padding: 6px 12px; border: none; border-radius: 10px; background: #eee; white-space: nowrap; font-size: 11px; }
+        .t-tab-btn { padding: 6px 12px; border: none; border-radius: 10px; background: #eee; white-space: nowrap; font-size: 11px; cursor: pointer; }
         .t-tab-btn.active { background: var(--gbf-blue); color: white; }
-        .t-input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
-        .t-input-grid input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .t-input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 8px; margin-top: 10px; }
+        .t-input-grid input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 12px; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 8px 4px; text-align: left; }
         .status-ng { color: var(--danger); font-weight: bold; }
-        
-        /* 共通ボタン */
         .btn-action { padding: 12px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; display: inline-block; text-align: center; text-decoration: none; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <nav class="main-nav">
-    <button class="nav-btn active" onclick="switchMainTab('manager', this)">
-        <span class="icon">📦</span><span>素材管理</span>
-    </button>
-    <button class="nav-btn" onclick="switchMainTab('trans', this)">
-        <span class="icon">⚡</span><span>限界超越</span>
-    </button>
+    <button class="nav-btn active" onclick="switchMainTab('manager', this)"><span class="icon">📦</span><span>素材管理</span></button>
+    <button class="nav-btn" onclick="switchMainTab('trans', this)"><span class="icon">⚡</span><span>限界超越</span></button>
 </nav>
 
 <section id="section-manager" class="app-section active">
@@ -120,37 +77,35 @@
             <input type="file" id="importFileM" style="display:none" onchange="importMData(event)">
         </div>
     </div>
-
     <div class="header-box">
         <div class="val-unit"><label id="m-total-label">目標個数</label><div class="val-num" id="m-grand-total">0</div></div>
         <div id="m-weapon-box" class="val-unit" style="display:none"><label>武器所持晶核</label><div class="val-num" id="m-weapon-val">0</div></div>
         <div id="m-stock-box" class="val-unit"><label id="m-stock-label">所持数</label><input type="number" id="m-stock-input" style="width:70px; text-align:center" oninput="saveM()"></div>
         <div class="val-unit"><label id="m-need-label">不足分</label><div class="val-num red" id="m-needed-total">0</div></div>
     </div>
-
     <div id="m-container" class="grid-cards"></div>
 </section>
 
 <section id="section-trans" class="app-section">
     <div class="t-container">
         <div class="t-card">
-            <h3 style="margin:0 0 10px 0; font-size:14px">① ファイルバックアップ</h3>
+            <h3 style="margin:0 0 10px 0; font-size:14px">① データ管理</h3>
             <div style="display:flex; gap:10px;">
-                <button class="btn-action" style="background:#555; flex:1;" onclick="downloadT()">設定を保存</button>
-                <button class="btn-action" style="background:#555; flex:1;" onclick="document.getElementById('importFileT').click()">設定を読込</button>
+                <button class="btn-action" style="background:#555; flex:1;" onclick="downloadT()">設定を書き出し</button>
+                <button class="btn-action" style="background:#555; flex:1;" onclick="document.getElementById('importFileT').click()">設定を読み込み</button>
                 <input type="file" id="importFileT" style="display:none" accept=".json" onchange="uploadTFile(event)">
             </div>
         </div>
 
         <div class="t-card">
-            <h3 style="margin:0 0 10px 0; font-size:14px">② 各キャラの進捗設定</h3>
+            <h3 style="margin:0 0 10px 0; font-size:14px">② キャラ進捗</h3>
             <div class="char-grid" id="t-char-settings"></div>
         </div>
 
         <div class="t-card">
-            <h3 style="margin:0 0 10px 0; font-size:14px">③ 素材の所持数入力</h3>
+            <h3 style="margin:0 0 10px 0; font-size:14px">③ 所持数入力</h3>
             <div class="t-tabs" id="t-attr-tabs">
-                <button class="t-tab-btn active" onclick="switchTInputTab('Common')">共通</button>
+                <button class="t-tab-btn active" onclick="switchTInputTab('Common')">共通 / 個別</button>
                 <button class="t-tab-btn" onclick="switchTInputTab('火')">火</button>
                 <button class="t-tab-btn" onclick="switchTInputTab('水')">水</button>
                 <button class="t-tab-btn" onclick="switchTInputTab('土')">土</button>
@@ -162,66 +117,57 @@
         </div>
 
         <div class="t-card">
-            <h3 style="margin:0 0 10px 0; font-size:14px">④ 不足素材の集計結果</h3>
+            <h3 style="margin:0 0 10px 0; font-size:14px">④ 不足素材の集計</h3>
             <div id="t-result-container"></div>
-            <button class="btn-action" style="background:var(--success); width:100%; margin-top:15px; font-size: 16px;" onclick="saveT()">ブラウザに保存（確定）</button>
+            <button class="btn-action" style="background:var(--success); width:100%; margin-top:15px; font-size: 16px;" onclick="saveT()">ブラウザに保存</button>
         </div>
     </div>
 </section>
 
 <script>
-/* JavaScript部分は変更なし */
-/* ==========================================
-   共通：メインタブ切り替え
-   ========================================== */
+const charMaster = [
+    {n:"一伐槍", j:"ウーノ", a:"水", wt:"槍", r:["火","水"], id:"一番"},
+    {n:"二王弓", j:"ソーン", a:"光", wt:"弓", r:["火","風"], id:"二番"},
+    {n:"三寅斧", j:"サラーサ", a:"土", wt:"斧", r:["土","水"], id:"三番"},
+    {n:"四天刃", j:"カトル", a:"水", wt:"短剣", r:["火","水"], id:"四番"},
+    {n:"五神杖", j:"フュンフ", a:"光", wt:"杖", r:["水","土"], id:"五番"},
+    {n:"六崩拳", j:"シス", a:"闇", wt:"拳", r:["火","風"], id:"六番"},
+    {n:"七星剣", j:"シエテ", a:"風", wt:"剣", r:["風","土"], id:"七番"},
+    {n:"八命切", j:"オクトー", a:"土", wt:"刀", r:["土","風"], id:"八番"},
+    {n:"九界琴", j:"ニオ", a:"風", wt:"琴", r:["風","土"], id:"九番"},
+    {n:"十狼雷", j:"エッセル", a:"火", wt:"銃", r:["火","土"], id:"十番"}
+];
+
+const materialOrder = ["剣", "短剣", "槍", "斧", "杖", "銃", "拳", "弓", "琴", "刀"];
+const sortedWeaponMaster = [...charMaster].sort((a, b) => materialOrder.indexOf(a.wt) - materialOrder.indexOf(b.wt));
+
+// ストレージキーをバックアップファイルに合わせる
+const M_STORAGE_KEY = 'gbf_manager_data_unified';
+const T_STORAGE_KEY = 'GBF_TEN_TRANS_APP_DATA_V10';
+
+function getFormattedDate() {
+    const d = new Date();
+    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+}
+
+let mCurrentTab = 'quartz';
 function switchMainTab(target, btn) {
     document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('section-' + target).classList.add('active');
     btn.classList.add('active');
-    window.scrollTo(0,0);
 }
-
-/* ==========================================
-   Tool 1: GBF Manager (Quartz/Shoukaku/Tense)
-   ========================================== */
-let mCurrentTab = 'quartz';
-const M_STORAGE_KEY = 'gbf_manager_data_unified';
-const weaponMaster = [
-    {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
-    {id: 2, n: "二の欠片", j: "ソーン", w: "二乃弓", a: "光", wt: "弓"},
-    {id: 3, n: "三の欠片", j: "サラーサ", w: "三乃斧", a: "土", wt: "斧"},
-    {id: 4, n: "四の欠片", j: "カトル", w: "四乃短剣", a: "水", wt: "短剣"},
-    {id: 5, n: "五の欠片", j: "フュンフ", w: "五乃杖", a: "光", wt: "杖"},
-    {id: 6, n: "六の欠片", j: "シス", w: "六乃拳", a: "闇", wt: "拳"},
-    {id: 7, n: "七の欠片", j: "シエテ", w: "七乃剣", a: "風", wt: "剣"},
-    {id: 8, n: "八の欠片", j: "オクトー", w: "八乃刀", a: "土", wt: "刀"},
-    {id: 9, n: "九の欠片", j: "ニオ", w: "九乃竪琴", a: "風", wt: "琴"},
-    {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
-];
-
 function switchMSubTab(tab) {
     mCurrentTab = tab;
     document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
     document.getElementById('btn-' + tab).classList.add('active');
     document.getElementById('m-weapon-box').style.display = (tab === 'shoukaku') ? 'block' : 'none';
     document.getElementById('m-stock-box').style.display = (tab === 'tense') ? 'none' : 'block';
-    
-    const labels = {
-        quartz: ["目標個数", "所持数", "不足分"],
-        shoukaku: ["目標晶核", "所持晶核", "不足分"],
-        tense: ["必要欠片(合計)", "", "実質不足分"]
-    };
-    document.getElementById('m-total-label').textContent = labels[tab][0];
-    document.getElementById('m-stock-label').textContent = labels[tab][1];
-    document.getElementById('m-need-label').textContent = labels[tab][2];
-    
     renderM();
 }
 
 function renderM() {
-    const container = document.getElementById('m-container');
-    container.innerHTML = '';
+    const container = document.getElementById('m-container'); container.innerHTML = '';
     if (mCurrentTab === 'quartz') {
         const sages = [{a:"火", s:["アラナン","フラウ"]},{a:"水",s:["テレサ","ハーゼ"]},{a:"土",s:["カイム","ロベリア"]},{a:"風",s:["エスタ","カッツェ"]},{a:"光",s:["ガイゼン"]},{a:"闇",s:["ニーア"]}];
         sages.forEach((g, i) => {
@@ -236,17 +182,17 @@ function renderM() {
             container.innerHTML += h + `</div></div>`;
         });
     } else if (mCurrentTab === 'shoukaku') {
-        weaponMaster.forEach((m, i) => {
+        sortedWeaponMaster.forEach((m, i) => {
             let h = `<div class="m-card ${m.a}"><h3>極星器:${m.wt}</h3><div class="item-list">`;
-            [{l:"3凸作成",c:45},{l:"4凸解放",c:45},{l:"5凸解放",c:80},{l:"覚醒強化",c:170}].forEach((s, si) => h += `<label><input type="checkbox" class="m-cb" data-cost="${s.c}" id="s-${i}-${si}" onchange="saveM()">${s.l}(${s.c})</label>`);
-            h += `</div><div style="margin-top:10px; font-size:12px">所持(無凸): <input type="number" id="ms-${i}" style="width:40px" oninput="saveM()"> 本<br>不足: <span id="msd-${i}" style="color:red; font-weight:bold">0</span>個</div></div>`;
+            [{l:"3凸作成",c:45},{l:"4凸解放",c:45},{l:"5凸解放",c:80},{l:"覚醒強化",c:170}].forEach((s, si) => h += `<label><input type="checkbox" class="m-cb" data-cost="${s.c}" id="s-${m.j}-${si}" onchange="saveM()">${s.l}(${s.c})</label>`);
+            h += `</div><div style="margin-top:10px; font-size:12px">所持(無凸): <input type="number" id="ms-${m.j}" style="width:40px" oninput="saveM()"> 本<br>不足: <span id="msd-${m.j}" style="color:red; font-weight:bold">0</span>個</div></div>`;
             container.innerHTML += h;
         });
     } else if (mCurrentTab === 'tense') {
-        weaponMaster.forEach((t, i) => {
-            let h = `<div class="m-card ${t.a}"><h3>${t.n}(${t.j})</h3><div class="item-list">`;
-            [{l:"超越120",c:50},{l:"極星4凸",c:20},{l:"極星5凸",c:20},{l:"光跡Lv4",c:20}].forEach((s, si) => h += `<label><input type="checkbox" class="m-cb" data-cost="${s.c}" id="t-${i}-${si}" onchange="saveM()">${s.l}(${s.c})</label>`);
-            h += `</div><div style="margin-top:10px; font-size:11px">天星器所持: <input type="number" id="mt-${i}" style="width:40px" oninput="saveM()"> 本<br>不足欠片: <span id="mtd-${i}" style="color:red; font-weight:bold">0</span> (要:<span id="mtw-${i}">0</span>本)</div></div>`;
+        charMaster.forEach((t, i) => {
+            let h = `<div class="m-card ${t.a}"><h3>${t.id}天星の欠片(${t.n} / ${t.j})</h3><div class="item-list">`;
+            [{l:"超越120",c:50},{l:"極星4凸",c:20},{l:"極星5凸",c:20},{l:"光跡Lv4",c:20}].forEach((s, si) => h += `<label><input type="checkbox" class="m-cb" data-cost="${s.c}" id="t-${t.j}-${si}" onchange="saveM()">${s.l}(${s.c})</label>`);
+            h += `</div><div style="margin-top:10px; font-size:11px">天星器所持: <input type="number" id="mt-${t.j}" style="width:40px" oninput="saveM()"> 本<br>不足欠片: <span id="mtd-${t.j}" style="color:red; font-weight:bold">0</span> (要:<span id="mtw-${t.j}">0</span>本)</div></div>`;
             container.innerHTML += h;
         });
     }
@@ -256,31 +202,35 @@ function renderM() {
 function saveM() {
     const s = JSON.parse(localStorage.getItem(M_STORAGE_KEY) || '{"checks":{},"stocks":{},"headStocks":{}}');
     document.querySelectorAll('.m-cb').forEach(c => s.checks[c.id] = c.checked);
-    if(mCurrentTab==='shoukaku') weaponMaster.forEach((_,i)=> s.stocks[`s-${i}`] = parseInt(document.getElementById(`ms-${i}`).value)||0);
-    if(mCurrentTab==='tense') weaponMaster.forEach((_,i)=> s.stocks[`t-${i}`] = parseInt(document.getElementById(`mt-${i}`).value)||0);
-    if(mCurrentTab!=='tense') s.headStocks[mCurrentTab] = parseInt(document.getElementById('m-stock-input').value)||0;
+    charMaster.forEach(m => {
+        const msEl = document.getElementById(`ms-${m.j}`); if(msEl) s.stocks[`s-${m.j}`] = parseInt(msEl.value)||0;
+        const mtEl = document.getElementById(`mt-${m.j}`); if(mtEl) s.stocks[`t-${m.j}`] = parseInt(mtEl.value)||0;
+    });
+    if(mCurrentTab!=='tense') {
+        const hsInput = document.getElementById('m-stock-input');
+        if(hsInput) s.headStocks[mCurrentTab] = parseInt(hsInput.value)||0;
+    }
     localStorage.setItem(M_STORAGE_KEY, JSON.stringify(s));
     calcM(s);
 }
 
 function calcM(data) {
-    let total = 0;
-    document.querySelectorAll('.m-cb').forEach(c => { if(!c.checked) total += parseInt(c.dataset.cost); });
+    let total = 0; document.querySelectorAll('.m-cb').forEach(c => { if(!c.checked) total += parseInt(c.dataset.cost); });
     let conv = 0;
     if(mCurrentTab==='shoukaku') {
-        weaponMaster.forEach((_,i)=>{
-            const c = data.stocks[`s-${i}`]||0; conv += (c*15);
-            let n = 0; [0,1,2,3].forEach(si=>{ const cb=document.getElementById(`s-${i}-${si}`); if(cb && !cb.checked) n+=parseInt(cb.dataset.cost); });
-            const diffEl = document.getElementById(`msd-${i}`); if(diffEl) diffEl.textContent = Math.max(0, n-(c*15));
+        charMaster.forEach(m => {
+            const c = data.stocks[`s-${m.j}`]||0; conv += (c*15);
+            let n = 0; [0,1,2,3].forEach(si=>{ const cb=document.getElementById(`s-${m.j}-${si}`); if(cb && !cb.checked) n+=parseInt(cb.dataset.cost); });
+            const diffEl = document.getElementById(`msd-${m.j}`); if(diffEl) diffEl.textContent = Math.max(0, n-(c*15));
         });
         document.getElementById('m-weapon-val').textContent = conv;
     }
     if(mCurrentTab==='tense') {
-        let ts=0; weaponMaster.forEach((_,i)=>{
-            const c=data.stocks[`t-${i}`]||0; let n=0; [0,1,2,3].forEach(si=>{ const cb=document.getElementById(`t-${i}-${si}`); if(cb && !cb.checked) n+=parseInt(cb.dataset.cost); });
+        let ts=0; charMaster.forEach(m => {
+            const c=data.stocks[`t-${m.j}`]||0; let n=0; [0,1,2,3].forEach(si=>{ const cb=document.getElementById(`t-${m.j}-${si}`); if(cb && !cb.checked) n+=parseInt(cb.dataset.cost); });
             const cur=Math.floor(c/4)*5; const df=Math.max(0, n-cur); ts+=df;
-            const dEl = document.getElementById(`mtd-${i}`); if(dEl) dEl.textContent=df;
-            const wEl = document.getElementById(`mtw-${i}`); if(wEl) wEl.textContent=Math.max(0,(Math.ceil(df/5)*4)-(c%4));
+            const dEl = document.getElementById(`mtd-${m.j}`); if(dEl) dEl.textContent=df;
+            const wEl = document.getElementById(`mtw-${m.j}`); if(wEl) wEl.textContent=Math.max(0,(Math.ceil(df/5)*4)-(c%4));
         });
         document.getElementById('m-needed-total').textContent = ts;
     } else {
@@ -293,17 +243,21 @@ function calcM(data) {
 function loadM() {
     const d = JSON.parse(localStorage.getItem(M_STORAGE_KEY) || '{"checks":{},"stocks":{},"headStocks":{}}');
     document.querySelectorAll('.m-cb').forEach(c => { if(d.checks[c.id]!==undefined) c.checked=d.checks[c.id]; });
-    if(mCurrentTab==='shoukaku') weaponMaster.forEach((_,i)=> { const el = document.getElementById(`ms-${i}`); if(el) el.value = d.stocks[`s-${i}`]||0; });
-    if(mCurrentTab==='tense') weaponMaster.forEach((_,i)=> { const el = document.getElementById(`mt-${i}`); if(el) el.value = d.stocks[`t-${i}`]||0; });
-    if(mCurrentTab!=='tense') document.getElementById('m-stock-input').value = d.headStocks[mCurrentTab]||0;
+    charMaster.forEach(m => {
+        const msEl = document.getElementById(`ms-${m.j}`); if(msEl) msEl.value = d.stocks[`s-${m.j}`]||0;
+        const mtEl = document.getElementById(`mt-${m.j}`); if(mtEl) mtEl.value = d.stocks[`t-${m.j}`]||0;
+    });
+    if(mCurrentTab!=='tense') {
+        const el = document.getElementById('m-stock-input');
+        if(el) el.value = d.headStocks[mCurrentTab]||0;
+    }
     calcM(d);
 }
 
 function exportMData() {
-    const d = localStorage.getItem(M_STORAGE_KEY);
-    if(!d){alert("保存されたデータがありません");return;}
+    const d = localStorage.getItem(M_STORAGE_KEY); if(!d) return;
     const b=new Blob([d],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a');
-    a.href=u; a.download=`GBF_Manager_Backup.json`; a.click();
+    a.href=u; a.download=`gbf_manager_素材管理_${getFormattedDate()}.json`; a.click();
 }
 
 function importMData(e) {
@@ -312,32 +266,26 @@ function importMData(e) {
     reader.onload = (ev) => {
         try {
             const json = JSON.parse(ev.target.result);
-            if(confirm("素材管理データを上書きして復元しますか？")) {
-                localStorage.setItem(M_STORAGE_KEY, JSON.stringify(json));
-                renderM();
-            }
+            localStorage.setItem(M_STORAGE_KEY, JSON.stringify(json));
+            renderM();
+            alert("素材管理データを復元しました");
         } catch(err) { alert("無効なファイルです"); }
     };
     reader.readAsText(file);
 }
 
-/* ==========================================
-   Tool 2: 十天衆限界超越
-   ========================================== */
-const T_STORAGE_KEY = 'GBF_TEN_TRANS_APP_DATA';
-const characters = [{n:"ウーノ", a:"水", anima:"黒麒麟"}, {n:"ソーン", a:"光", anima:"黄龍"}, {n:"サラーサ", a:"土", anima:"黄龍"}, {n:"カトル", a:"水", anima:"黒麒麟"}, {n:"フュンフ", a:"光", anima:"黄龍"}, {n:"シス", a:"闇", anima:"黒麒麟"}, {n:"シエテ", a:"風", anima:"黒麒麟"}, {n:"オクトー", a:"土", anima:"黄龍"}, {n:"ニオ", a:"風", anima:"黄龍"}, {n:"エッセル", a:"火", anima:"黒麒麟"}];
-const commonMats = ["ルピ", "ヒヒイロカネ", "碧麗の証", "ダマスカス骸晶", "星晶の欠片", "究竟の証", "JP", "栄光の証", "覇者の証", "宝晶石", "黄龍のマグナアニマ", "黒麒麟のマグナアニマ", "終末の暗晶", "漆黒の棘翅", "狡知の魔角", "バハ紫電角", "真龍の金鱗"];
-const attrMats = ["真なるアニマ", "銀片", "六竜素材", "光輪", "マグナIIマグナアニマ", "プシュケー", "武器エレ", "属性エレ", "竜珠", "ブライト", "下位宝珠", "ジーン", "朽ち武器(無凸)", "天星器(無凸)"];
-const masterData = {
-    110: { common:{"ルピ":100000, "ダマスカス骸晶":20, "ヒヒイロカネ":1, "星晶の欠片":7500}, attr:{"六竜素材":50, "光輪":80, "銀片":200, "下位宝珠":7500, "ジーン":7500, "朽ち武器(無凸)":120} },
-    120: { common:{"ルピ":5000000, "究竟の証":100, "JP":20000, "栄光の証":1500, "覇者の証":300, "宝晶石":1000, "バハ紫電角":100}, attr:{"真なるアニマ":30, "マグナIIマグナアニマ":50, "プシュケー":300, "下位宝珠":2500, "ジーン":2500, "朽ち武器(無凸)":40, "天星器(無凸)":40} },
-    130: { common:{"碧麗の証":1} },
-    140: { common:{"ルピ":5000000, "真龍の金鱗":50}, attr:{"ブライト":30, "武器エレ":2000, "属性エレ":2000, "竜珠":300} },
-    150: { common:{"終末の暗晶":30, "漆黒の棘翅":30, "狡知の魔角":30, "碧麗の証":1} }
-};
-
+/* --- Trans Logic --- */
+const commonOrder = ["碧麗の証", "究竟の証", "栄光の証", "覇者の証", "ルピ", "ヒヒイロカネ", "ダマスカス骸晶", "星晶の欠片", "JP", "宝晶石", "黄龍のマグナアニマ", "黒麒麟のマグナアニマ", "終末の暗晶", "漆黒の棘翅", "狡知の魔角", "バハ紫電角", "真龍の金鱗"];
+const attrMats = ["真なるアニマ", "六竜素材", "光輪", "マグナIIマグナアニマ", "プシュケー", "属性エレメント", "竜珠", "ブライト", "下位宝珠", "ジーン", "朽ち武器(無凸)", "天星器(無凸)"];
 let tData = { chars: {}, stocks: {} };
 let tActiveTab = 'Common';
+const masterDataT = {
+    110: { common:{"ルピ":100000, "ダマスカス骸晶":20, "ヒヒイロカネ":1, "星晶の欠片":7500}, attr:{"六竜素材":50, "光輪":80, "下位宝珠":7500, "ジーン":7500, "朽ち武器(無凸)":120}, spec:{"銀片":200} },
+    120: { common:{"ルピ":5000000, "究竟の証":100, "JP":20000, "栄光の証":1500, "覇者の証":300, "宝晶石":1000, "バハ紫電角":100}, attr:{"真なるアニマ":30, "マグナIIマグナアニマ":50, "プシュケー":300, "下位宝珠":2500, "ジーン":2500, "朽ち武器(無凸)":40, "天星器(無凸)":40} },
+    130: { common:{"碧麗の証":1} },
+    140: { common:{"ルピ":5000000, "真龍の金鱗":50}, attr:{"ブライト":30, "属性エレメント":2000, "竜珠":300}, spec:{"武器エレ":2000} },
+    150: { common:{"終末の暗晶":30, "漆黒の棘翅":30, "狡知の魔角":30, "碧麗の証":1} }
+};
 
 function initT() {
     const saved = localStorage.getItem(T_STORAGE_KEY);
@@ -346,24 +294,14 @@ function initT() {
 }
 
 function renderTSettings() {
-    const container = document.getElementById('t-char-settings');
-    container.innerHTML = '';
-    characters.forEach(c => {
-        if(!tData.chars[c.n]) tData.chars[c.n] = {cur:100, tar:100, fin:false};
-        const d = tData.chars[c.n];
+    const container = document.getElementById('t-char-settings'); container.innerHTML = '';
+    charMaster.forEach(c => {
+        if(!tData.chars[c.j]) tData.chars[c.j] = {cur:100, tar:100, fin:false};
+        const d = tData.chars[c.j];
         const attrClass = {火:'fire',水:'water',土:'earth',風:'wind',光:'light',闇:'dark'}[c.a];
-        container.innerHTML += `
-            <div class="char-item ${d.fin ? 'finished' : ''}" style="border-top-color:var(--${attrClass})">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px">
-                    <strong style="font-size:13px">${c.n}</strong>
-                    <input type="checkbox" onchange="toggleTFin('${c.n}',this.checked)" ${d.fin?'checked':''}>
-                </div>
-                <div style="display:flex; align-items:center; gap:2px;">
-                    <select style="flex:1" onchange="updateTChar('${c.n}','cur',this.value)" ${d.fin?'disabled':''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.cur==v?'selected':''}>${v}</option>`)}</select>
-                    <span>▶</span>
-                    <select style="flex:1" onchange="updateTChar('${c.n}','tar',this.value)" ${d.fin?'disabled':''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.tar==v?'selected':''}>${v}</option>`)}</select>
-                </div>
-            </div>`;
+        container.innerHTML += `<div class="char-item ${d.fin ? 'finished' : ''}" style="border-top-color:var(--${attrClass})">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px"><strong style="font-size:13px">${c.j}</strong><input type="checkbox" onchange="toggleTFin('${c.j}',this.checked)" ${d.fin?'checked':''}></div>
+            <div style="display:flex; align-items:center; gap:2px;"><select style="flex:1" onchange="updateTChar('${c.j}','cur',this.value)" ${d.fin?'disabled':''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.cur==v?'selected':''}>${v}</option>`)}</select><span>▶</span><select style="flex:1" onchange="updateTChar('${c.j}','tar',this.value)" ${d.fin?'disabled':''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.tar==v?'selected':''}>${v}</option>`)}</select></div></div>`;
     });
     switchTInputTab(tActiveTab);
     calcT();
@@ -371,62 +309,79 @@ function renderTSettings() {
 
 function updateTChar(n, k, v) { tData.chars[n][k] = parseInt(v); calcT(); }
 function toggleTFin(n, c) { tData.chars[n].fin = c; renderTSettings(); }
+
 function switchTInputTab(t) {
     tActiveTab = t;
-    document.querySelectorAll('.t-tab-btn').forEach(b => b.classList.toggle('active', b.innerText === t));
+    document.querySelectorAll('.t-tab-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(t)));
     const container = document.getElementById('t-stock-inputs'); container.innerHTML = '';
-    const list = (t === 'Common') ? commonMats : attrMats;
-    list.forEach(m => {
-        const id = t === 'Common' ? m : `${t}-${m}`;
-        const val = tData.stocks[id] || 0;
-        container.innerHTML += `<div><label style="display:block;font-size:10px;margin-bottom:2px;">${m}</label><input type="number" value="${val}" oninput="updateTStock('${id}',this.value)"></div>`;
-    });
+    if(t === 'Common') {
+        commonOrder.forEach(m => renderTInputItem(container, m, m));
+        container.innerHTML += `<div style="grid-column:1/-1; border-top:2px solid var(--gbf-blue); margin-top:10px; padding-top:5px; font-weight:bold; font-size:12px; color:var(--gbf-blue);">【銀片】</div>`;
+        sortedWeaponMaster.forEach(w => renderTInputItem(container, `${w.wt}の銀片`, `spec-銀片-${w.j}`));
+        container.innerHTML += `<div style="grid-column:1/-1; border-top:2px solid var(--gbf-blue); margin-top:10px; padding-top:5px; font-weight:bold; font-size:12px; color:var(--gbf-blue);">【武器エレメント】</div>`;
+        sortedWeaponMaster.forEach(w => renderTInputItem(container, `${w.wt}エレメント`, `spec-武器エレ-${w.j}`));
+    } else { attrMats.forEach(m => renderTInputItem(container, m, `${t}-${m}`)); }
+}
+
+function renderTInputItem(container, label, id) {
+    const val = tData.stocks[id] || 0;
+    container.innerHTML += `<div><label style="display:block;font-size:10px;margin-bottom:2px;">${label}</label><input type="number" value="${val}" oninput="updateTStock('${id}',this.value)"></div>`;
 }
 function updateTStock(id, v) { tData.stocks[id] = parseInt(v)||0; calcT(); }
 
 function calcT() {
     const needed = {};
-    characters.forEach(c => {
-        const d = tData.chars[c.n]; if(d.fin || d.tar <= d.cur) return;
-        for(let lv in masterData) {
+    charMaster.forEach(c => {
+        const d = tData.chars[c.j]; if(d.fin || d.tar <= d.cur) return;
+        for(let lv in masterDataT) {
             const num = parseInt(lv);
             if(num > d.cur && num <= d.tar) {
-                for(let m in masterData[lv].common) needed[m] = (needed[m]||0) + masterData[lv].common[m];
-                for(let m in masterData[lv].attr) { const key=`${c.a}-${m}`; needed[key] = (needed[key]||0) + masterData[lv].attr[m]; }
-                if(num === 140) { const ak=`${c.anima}のマグナアニマ`; needed[ak] = (needed[ak]||0)+30; }
+                for(let m in masterDataT[lv].common) needed[m] = (needed[m]||0) + masterDataT[lv].common[m];
+                for(let m in masterDataT[lv].attr) {
+                    let key = `${c.a}-${m}`;
+                    if(m === "光輪" && (c.a === "光" || c.a === "闇")) { c.r.forEach(r => { let rkey = `${r}-光輪`; needed[rkey] = (needed[rkey]||0) + masterDataT[lv].attr[m]/2; }); }
+                    else { needed[key] = (needed[key]||0) + masterDataT[lv].attr[m]; }
+                }
+                if(masterDataT[lv].spec) {
+                    if(masterDataT[lv].spec["銀片"]) { let k=`spec-銀片-${c.j}`; needed[k] = (needed[k]||0) + 200; }
+                    if(masterDataT[lv].spec["武器エレ"]) { let k=`spec-武器エレ-${c.j}`; needed[k] = (needed[k]||0) + 2000; }
+                }
+                if(num === 140) { const ak = (c.a==="火"||c.a==="闇"||c.a==="水"||c.a==="風") ? "黒麒麟のマグナアニマ" : "黄龍のマグナアニマ"; needed[ak] = (needed[ak]||0)+30; }
             }
         }
     });
-    const container = document.getElementById('t-result-container'); container.innerHTML = '';
-    ["共通", "火", "水", "土", "風", "光", "闇"].forEach(cat => {
-        const items = Object.keys(needed).filter(k => cat === "共通" ? (commonMats.includes(k) || (k.includes("アニマ") && !k.includes("-"))) : k.startsWith(cat + "-"));
+    const resContainer = document.getElementById('t-result-container'); resContainer.innerHTML = '';
+    const categories = ["共通", "銀片", "武器エレメント", "火", "水", "土", "風", "光", "闇"];
+    categories.forEach(cat => {
+        let items = [];
+        if(cat === "共通") items = Object.keys(needed).filter(k => commonOrder.includes(k));
+        else if(cat === "銀片") { items = sortedWeaponMaster.map(w => `spec-銀片-${w.j}`).filter(k => needed[k]); }
+        else if(cat === "武器エレメント") { items = sortedWeaponMaster.map(w => `spec-武器エレ-${w.j}`).filter(k => needed[k]); }
+        else items = Object.keys(needed).filter(k => k.startsWith(cat + "-"));
+        
         if(items.length > 0) {
-            let h = `<div style="background:#eee; padding:5px; margin:10px 0 5px; font-weight:bold; border-radius:4px;">${cat}</div><table>`;
-            items.sort().forEach(k => {
-                const s = tData.stocks[k]||0; const df = needed[k]-s;
-                h += `<tr class="${df<=0?'':'status-ng'}"><td>${df<=0?'<span style="color:#2ecc71">✓</span> ':''}${k.includes("-")?k.split("-")[1]:k}</td><td style="text-align:right">${needed[k].toLocaleString()}</td><td style="text-align:right">${df<=0?'-':df.toLocaleString()}</td></tr>`;
+            let h = `<div style="background:#eee; padding:5px; margin:10px 0 5px; font-weight:bold; border-radius:4px; font-size:12px;">${cat}</div><table>`;
+            items.forEach(k => {
+                const s = tData.stocks[k]||0; const df = needed[k]-s; let displayK = k;
+                if(k.startsWith("spec-銀片-")) { const w = charMaster.find(wm => wm.j === k.replace("spec-銀片-", "")); displayK = w ? `${w.wt}の銀片` : k; }
+                else if(k.startsWith("spec-武器エレ-")) { const w = charMaster.find(wm => wm.j === k.replace("spec-武器エレ-", "")); displayK = w ? `${w.wt}エレメント` : k; }
+                else if(k.includes("-")) { displayK = k.split("-")[1]; }
+                h += `<tr class="${df<=0?'':'status-ng'}"><td>${df<=0?'✓ ':''}${displayK}</td><td style="text-align:right">${needed[k].toLocaleString()}</td><td style="text-align:right">${df<=0?'-':df.toLocaleString()}</td></tr>`;
             });
-            container.innerHTML += h + `</table>`;
+            resContainer.innerHTML += h + `</table>`;
         }
     });
 }
-
 function saveT() { localStorage.setItem(T_STORAGE_KEY, JSON.stringify(tData)); alert("ブラウザに保存しました"); }
-function downloadT() { const b=new Blob([JSON.stringify(tData,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download="gbf_trans_data.json"; a.click(); }
+function downloadT() {
+    const b = new Blob([JSON.stringify(tData)], {type:'application/json'}); const u = URL.createObjectURL(b); const a = document.createElement('a');
+    a.href = u; a.download = `gbf_manager_限界超越_${getFormattedDate()}.json`; a.click();
+}
 function uploadTFile(e) {
     const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        try {
-            tData = JSON.parse(ev.target.result);
-            renderTSettings();
-            alert("設定を読み込みました");
-        } catch(err) { alert("無効なファイルです"); }
-    };
-    reader.readAsText(file);
+    const reader = new FileReader(); reader.onload = (ev) => { try { tData = JSON.parse(ev.target.result); renderTSettings(); } catch(e) { alert("エラー"); } }; reader.readAsText(file);
 }
 
-// 起動処理
 window.onload = () => {
     switchMSubTab('quartz');
     initT();
@@ -434,5 +389,3 @@ window.onload = () => {
 </script>
 </body>
 </html>
-
-
