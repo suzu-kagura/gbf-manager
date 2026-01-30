@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GBF Manager (Backup Edition)</title>
+    <title>GBF Manager</title>
     <style>
         :root {
             --fire: #ffeded; --fire-line: #f44336;
@@ -14,17 +14,19 @@
             --dark: #f3e5f5; --dark-line: #9c27b0;
             --accent: #2c3e50; --needed: #e74c3c;
         }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 100px; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 60px; }
         
-        .tab-menu { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 8px; padding: 10px; background: #f0f2f5; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        /* ヘッダー・メニュー周り */
+        .tab-menu { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; background: #f0f2f5; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
         .tab-btn.active { background: var(--accent); color: white; }
 
-        /* データ管理ボタン */
-        .backup-menu { position: fixed; top: 50px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; padding: 5px; z-index: 999; background: #f0f2f5; }
-        .backup-btn { font-size: 0.75em; padding: 4px 10px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; }
+        /* データ管理ボタン（タブの横） */
+        .backup-group { display: flex; gap: 4px; margin-left: 10px; border-left: 1px solid #ccc; padding-left: 10px; }
+        .backup-btn { font-size: 0.7em; padding: 6px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; cursor: pointer; font-weight: bold; color: #555; }
+        .backup-btn:hover { background: #eee; }
         
-        .header { position: sticky; top: 90px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
+        .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
         .calc-box { text-align: center; min-width: 90px; }
         .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; font-weight: bold; }
         .val { font-size: 1.4em; font-weight: bold; }
@@ -34,6 +36,7 @@
         .shoukaku-only { display: none; }
         body.tab-shoukaku .shoukaku-only { display: block; }
 
+        /* カード・グリッド */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #ddd; overflow: hidden; position: relative; }
         .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
@@ -61,14 +64,14 @@
 
 <div class="tab-menu">
     <button class="tab-btn active" id="btn-quartz" onclick="switchTab('quartz')">クォーツ</button>
-    <button class="tab-btn" id="btn-shoukaku" onclick="switchTab('shoukaku')">極星の晶核</button>
-    <button class="tab-btn" id="btn-tense" onclick="switchTab('tense')">天星の欠片</button>
-</div>
-
-<div class="backup-menu">
-    <button class="backup-btn" onclick="exportData()">データを保存(Export)</button>
-    <button class="backup-btn" onclick="document.getElementById('importFile').click()">データを復元(Import)</button>
-    <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+    <button class="tab-btn" id="btn-shoukaku" onclick="switchTab('shoukaku')">晶核</button>
+    <button class="tab-btn" id="btn-tense" onclick="switchTab('tense')">天星</button>
+    
+    <div class="backup-group">
+        <button class="backup-btn" title="エクスポート" onclick="exportData()">保存</button>
+        <button class="backup-btn" title="インポート" onclick="document.getElementById('importFile').click()">復元</button>
+        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+    </div>
 </div>
 
 <div class="header">
@@ -97,16 +100,16 @@
         {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
     ];
 
-    // --- データ入出力機能 ---
+    // --- データ入出力 ---
     function exportData() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (!data) { alert("保存されているデータがありません。"); return; }
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const date = new Date().toISOString().split('T')[0];
+        const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
         a.href = url;
-        a.download = `gbf_manager_backup_${date}.json`;
+        a.download = `GBF_Manager_Backup_${date}.json`;
         a.click();
         URL.revokeObjectURL(url);
     }
@@ -118,17 +121,16 @@
         reader.onload = function(e) {
             try {
                 const json = JSON.parse(e.target.result);
-                if (confirm("データを上書きして復元しますか？")) {
+                if (confirm("現在のデータを上書きしてバックアップを復元しますか？")) {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
                     location.reload();
                 }
             } catch (err) {
-                alert("ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。");
+                alert("ファイルの形式が正しくありません。");
             }
         };
         reader.readAsText(file);
     }
-    // -----------------------
 
     function render() {
         const container = document.getElementById('main-container');
@@ -189,19 +191,13 @@
 
     function saveData() {
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
-        const data = {
-            checks: {...stored.checks},
-            stocks: {...stored.stocks},
-            headStocks: {...stored.headStocks}
-        };
+        const data = { checks: {...stored.checks}, stocks: {...stored.stocks}, headStocks: {...stored.headStocks} };
 
         document.querySelectorAll('.q-check').forEach(cb => { data.checks[cb.id] = cb.checked; });
         if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { data.stocks[`s-${i}`] = parseInt(document.getElementById(`sstock-${i}`).value) || 0; });
         if(currentTab === 'tense') weaponMaster.forEach((m, i) => { data.stocks[`t-${i}`] = parseInt(document.getElementById(`tstock-${i}`).value) || 0; });
         
-        const headStock = parseInt(document.getElementById('stock').value) || 0;
-        data.headStocks[currentTab] = headStock;
-
+        data.headStocks[currentTab] = parseInt(document.getElementById('stock').value) || 0;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         calculate(data);
     }
@@ -209,20 +205,18 @@
     function calculate(data) {
         let grandTotal = 0;
         document.querySelectorAll('.q-check').forEach(cb => { if(!cb.checked) grandTotal += parseInt(cb.dataset.cost); });
-
         let weaponConvTotal = 0;
+
         if (currentTab === 'shoukaku') {
             weaponMaster.forEach((m, i) => {
                 const count = data.stocks[`s-${i}`] || 0;
-                const conv = count * 15;
-                weaponConvTotal += conv;
+                weaponConvTotal += (count * 15);
                 let cardNeed = 0;
                 [0,1,2,3].forEach(si => { const cb = document.getElementById(`s-${i}-${si}`); if(cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost); });
-                document.getElementById(`sdiff-${i}`).textContent = Math.max(0, cardNeed - conv);
+                document.getElementById(`sdiff-${i}`).textContent = Math.max(0, cardNeed - (count * 15));
             });
             document.getElementById('weapon-conv-val').textContent = weaponConvTotal;
         }
-
         if (currentTab === 'tense') {
             weaponMaster.forEach((t, i) => {
                 const count = data.stocks[`t-${i}`] || 0;
@@ -230,26 +224,20 @@
                 [0,1,2,3].forEach(si => { const cb = document.getElementById(`t-${i}-${si}`); if(cb && !cb.checked) need += parseInt(cb.dataset.cost); });
                 const currentKakeStock = Math.floor(count / 4) * 5;
                 const diffKake = Math.max(0, need - currentKakeStock);
-                const extraNeeded = Math.max(0, (Math.ceil(diffKake / 5) * 4) - (count % 4));
                 document.getElementById(`tdiff-${i}`).textContent = diffKake;
-                document.getElementById(`tweap-${i}`).textContent = extraNeeded;
+                document.getElementById(`tweap-${i}`).textContent = Math.max(0, (Math.ceil(diffKake / 5) * 4) - (count % 4));
             });
         }
-
         document.getElementById('grand-total').textContent = grandTotal;
         const headStock = data.headStocks[currentTab] || 0;
         document.getElementById('needed-total').textContent = Math.max(0, grandTotal - (headStock + weaponConvTotal));
     }
 
     function loadData() {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(!raw) return;
-        const data = JSON.parse(raw);
-        
+        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
         document.querySelectorAll('.q-check').forEach(cb => { if(data.checks[cb.id] !== undefined) cb.checked = data.checks[cb.id]; });
         if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { const el = document.getElementById(`sstock-${i}`); if(el) el.value = data.stocks[`s-${i}`] || 0; });
         if(currentTab === 'tense') weaponMaster.forEach((m, i) => { const el = document.getElementById(`tstock-${i}`); if(el) el.value = data.stocks[`t-${i}`] || 0; });
-        
         document.getElementById('stock').value = data.headStocks[currentTab] || 0;
         calculate(data);
     }
