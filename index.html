@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GBF Manager</title>
+    <title>GBF Manager (Backup Edition)</title>
     <style>
         :root {
             --fire: #ffeded; --fire-line: #f44336;
@@ -14,12 +14,17 @@
             --dark: #f3e5f5; --dark-line: #9c27b0;
             --accent: #2c3e50; --needed: #e74c3c;
         }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 60px; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 100px; }
+        
         .tab-menu { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 8px; padding: 10px; background: #f0f2f5; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
         .tab-btn.active { background: var(--accent); color: white; }
+
+        /* データ管理ボタン */
+        .backup-menu { position: fixed; top: 50px; left: 0; right: 0; display: flex; justify-content: center; gap: 10px; padding: 5px; z-index: 999; background: #f0f2f5; }
+        .backup-btn { font-size: 0.75em; padding: 4px 10px; border-radius: 4px; border: 1px solid #ccc; background: white; cursor: pointer; }
         
-        .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
+        .header { position: sticky; top: 90px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
         .calc-box { text-align: center; min-width: 90px; }
         .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; font-weight: bold; }
         .val { font-size: 1.4em; font-weight: bold; }
@@ -60,6 +65,12 @@
     <button class="tab-btn" id="btn-tense" onclick="switchTab('tense')">天星の欠片</button>
 </div>
 
+<div class="backup-menu">
+    <button class="backup-btn" onclick="exportData()">データを保存(Export)</button>
+    <button class="backup-btn" onclick="document.getElementById('importFile').click()">データを復元(Import)</button>
+    <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+</div>
+
 <div class="header">
     <div class="calc-box"><label id="header-total-label">目標個数</label><div class="val" id="grand-total">0</div></div>
     <div class="calc-box shoukaku-only"><label>武器所持晶核</label><div class="val" id="weapon-conv-val">0</div></div>
@@ -71,7 +82,7 @@
 
 <script>
     let currentTab = 'quartz';
-    const STORAGE_KEY = 'gbf_manager_data_unified'; // 統合キー
+    const STORAGE_KEY = 'gbf_manager_data_unified';
     
     const weaponMaster = [
         {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
@@ -85,6 +96,39 @@
         {id: 9, n: "九の欠片", j: "ニオ", w: "九乃竪琴", a: "風", wt: "琴"},
         {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
     ];
+
+    // --- データ入出力機能 ---
+    function exportData() {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (!data) { alert("保存されているデータがありません。"); return; }
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const date = new Date().toISOString().split('T')[0];
+        a.href = url;
+        a.download = `gbf_manager_backup_${date}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (confirm("データを上書きして復元しますか？")) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
+                    location.reload();
+                }
+            } catch (err) {
+                alert("ファイルの読み込みに失敗しました。正しいJSONファイルを選択してください。");
+            }
+        };
+        reader.readAsText(file);
+    }
+    // -----------------------
 
     function render() {
         const container = document.getElementById('main-container');
@@ -144,13 +188,13 @@
     }
 
     function saveData() {
+        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
         const data = {
-            checks: {},
-            stocks: {},
-            headStocks: JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').headStocks || {}
+            checks: {...stored.checks},
+            stocks: {...stored.stocks},
+            headStocks: {...stored.headStocks}
         };
 
-        // 現在表示されているチェックボックスと個別入力を取得
         document.querySelectorAll('.q-check').forEach(cb => { data.checks[cb.id] = cb.checked; });
         if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { data.stocks[`s-${i}`] = parseInt(document.getElementById(`sstock-${i}`).value) || 0; });
         if(currentTab === 'tense') weaponMaster.forEach((m, i) => { data.stocks[`t-${i}`] = parseInt(document.getElementById(`tstock-${i}`).value) || 0; });
@@ -158,16 +202,8 @@
         const headStock = parseInt(document.getElementById('stock').value) || 0;
         data.headStocks[currentTab] = headStock;
 
-        // 既存のデータを壊さないようマージ
-        const oldData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
-        const finalData = {
-            checks: {...oldData.checks, ...data.checks},
-            stocks: {...oldData.stocks, ...data.stocks},
-            headStocks: {...oldData.headStocks, ...data.headStocks}
-        };
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
-        calculate(finalData);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        calculate(data);
     }
 
     function calculate(data) {
