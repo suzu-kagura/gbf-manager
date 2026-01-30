@@ -3,140 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ニューワールドクォーツ計算機</title>
+    <title>GBF Manager</title>
     <style>
         :root {
-            --fire: #ffeded; --water: #e3f2fd; --earth: #fdf5e6;
-            --wind: #e8f5e9; --light: #fffde7; --dark: #f3e5f5;
-            --needed: #e74c3c;
+            --fire: #ffeded; --fire-line: #f44336;
+            --water: #e3f2fd; --water-line: #2196f3;
+            --earth: #fdf5e6; --earth-line: #795548;
+            --wind: #e8f5e9; --wind-line: #4caf50;
+            --light: #fffde7; --light-line: #fbc02d;
+            --dark: #f3e5f5; --dark-line: #9c27b0;
+            --accent: #2c3e50; --needed: #e74c3c;
         }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
+        .tab-menu { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
+        .tab-btn.active { background: var(--accent); color: white; }
         
-        /* 画像のデザインを再現したヘッダー */
-        .header { position: sticky; top: 0; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 20px; }
-        .calc-box { text-align: center; min-width: 150px; }
-        .calc-box label { font-size: 0.85em; color: #666; display: block; margin-bottom: 8px; }
-        .val { font-size: 2.2em; font-weight: bold; }
+        .header { position: sticky; top: 5px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 10px; }
+        .calc-box { text-align: center; min-width: 90px; }
+        .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; }
+        .val { font-size: 1.5em; font-weight: bold; }
         .needed-val { color: var(--needed); }
-        .stock-input { font-size: 1.8em; width: 100px; text-align: center; border: 2px solid #ddd; border-radius: 10px; font-weight: bold; padding: 5px; }
+        .stock-input { font-size: 1.3em; width: 80px; text-align: center; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; }
         
-        /* カードレイアウト */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 25px; }
-        .card { background: white; border-radius: 15px; padding: 20px; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .card h3 { margin-top: 0; font-size: 1.4em; border-bottom: none; }
-        
-        .attr-fire { border-top: 12px solid #f44336; background: var(--fire); }
-        .attr-water { border-top: 12px solid #2196f3; background: var(--water); }
-        .attr-earth { border-top: 12px solid #795548; background: var(--earth); }
-        .attr-wind { border-top: 12px solid #4caf50; background: var(--wind); }
-        .attr-light { border-top: 12px solid #fbc02d; background: var(--light); }
-        .attr-dark { border-top: 12px solid #9c27b0; background: var(--dark); }
+        body.tab-tense .header-stock-box, body.tab-tense .header-needed-box { display: none; }
 
-        .group-title { font-size: 0.95em; font-weight: bold; margin: 18px 0 8px; background: rgba(255,255,255,0.8); padding: 5px 12px; border-radius: 6px; border-left: 4px solid #444; }
-        .item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        label { display: flex; align-items: center; background: rgba(255,255,255,0.9); padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85em; transition: 0.2s; border: 1px solid transparent; }
-        label:hover { background: #fff; border-color: #ccc; }
-        label:has(input:checked) { background: rgba(0,0,0,0.05); color: #999; text-decoration: line-through; }
-        input[type="checkbox"] { margin-right: 10px; transform: scale(1.3); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
+        .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #ddd; overflow: hidden; position: relative; }
+        .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
         
-        .subtotal { text-align: right; margin-top: 15px; font-weight: bold; font-size: 1.1em; border-top: 1px dashed #bbb; padding-top: 12px; color: #555; }
+        /* 属性別カラースタイル */
+        .attr-火 { background-color: var(--fire); } .attr-火::before { background-color: var(--fire-line); }
+        .attr-水 { background-color: var(--water); } .attr-水::before { background-color: var(--water-line); }
+        .attr-土 { background-color: var(--earth); } .attr-土::before { background-color: var(--earth-line); }
+        .attr-風 { background-color: var(--wind); } .attr-風::before { background-color: var(--wind-line); }
+        .attr-光 { background-color: var(--light); } .attr-光::before { background-color: var(--light-line); }
+        .attr-闇 { background-color: var(--dark); } .attr-闇::before { background-color: var(--dark-line); }
+
+        .group-title { font-size: 0.8em; font-weight: bold; margin: 10px 0 5px; background: rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 4px; border-left: 4px solid #444; }
+        .item-grid { display: grid; grid-template-columns: 1fr; gap: 4px; }
+        label { display: flex; align-items: center; background: rgba(255,255,255,0.8); padding: 10px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; border: 1px solid rgba(0,0,0,0.05); }
+        label:has(input:checked) { background: rgba(0,0,0,0.05); color: #999; text-decoration: line-through; border-color: transparent; }
+        input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
+        
+        .card-calc { margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; }
+        .card-stock-input { width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; }
+        .card-result { font-weight: bold; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 10px; }
+        .weapon-needed { margin-top: 5px; color: #2980b9; font-weight: bold; font-size: 0.9em; line-height: 1.4; }
+        .txt-red { color: var(--needed); }
     </style>
 </head>
-<body>
+<body class="tab-quartz">
 
-<div class="header">
-    <div class="calc-box"><label>未完了合計</label><div class="val" id="grand-total">0</div></div>
-    <div class="calc-box"><label>所持数</label><input type="number" id="stock" class="stock-input" value="0" oninput="saveAndCalc()"></div>
-    <div class="calc-box"><label>不足分</label><div class="val needed-val" id="needed-total">0</div></div>
-    <div class="calc-box"><label>古戦場換算</label><div class="val" id="gw-count">0</div></div>
+<div class="tab-menu">
+    <button class="tab-btn active" id="btn-quartz" onclick="switchTab('quartz')">クォーツ</button>
+    <button class="tab-btn" id="btn-shoukaku" onclick="switchTab('shoukaku')">極星の晶核</button>
+    <button class="tab-btn" id="btn-tense" onclick="switchTab('tense')">天星の欠片</button>
 </div>
 
-<div class="grid" id="app-grid"></div>
+<div class="header">
+    <div class="calc-box"><label id="header-total-label">未完了合計</label><div class="val" id="grand-total">0</div></div>
+    <div class="calc-box header-stock-box"><label>所持数</label><input type="number" id="stock" class="stock-input" value="0" oninput="saveData()"></div>
+    <div class="calc-box header-needed-box"><label>不足分</label><div class="val needed-val" id="needed-total">0</div></div>
+    <div class="calc-box"><label id="unit-label">古戦場換算</label><div class="val" id="gw-count">0</div></div>
+</div>
+
+<div id="main-container" class="grid"></div>
 
 <script>
-    const isshizueSteps = [
-        { id: "s0", label: "交換", cost: 5 },
-        { id: "s1", label: "1凸", cost: 5 },
-        { id: "s2", label: "2凸", cost: 10 },
-        { id: "s3", label: "3凸", cost: 20 },
-        { id: "s4", label: "4凸", cost: 20 },
-        { id: "s5", label: "5凸", cost: 30 }
+    let currentTab = 'quartz';
+    const attrMap = ["火", "水", "土", "風", "光", "闇"];
+    
+    // 十天衆・天星器・属性の対応マスタ
+    const weaponMaster = [
+        {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
+        {id: 2, n: "二の欠片", j: "ソーン", w: "二乃弓", a: "光", wt: "弓"},
+        {id: 3, n: "三の欠片", j: "サラーサ", w: "三乃斧", a: "土", wt: "斧"},
+        {id: 4, n: "四の欠片", j: "カトル", w: "四乃短剣", a: "水", wt: "短剣"},
+        {id: 5, n: "五の欠片", j: "フュンフ", w: "五乃杖", a: "光", wt: "杖"},
+        {id: 6, n: "六の欠片", j: "シス", w: "六乃拳", a: "闇", wt: "拳"},
+        {id: 7, n: "七の欠片", j: "シエテ", w: "七乃剣", a: "風", wt: "剣"},
+        {id: 8, n: "八の欠片", j: "オクトー", w: "八乃刀", a: "土", wt: "刀"},
+        {id: 9, n: "九の欠片", j: "ニオ", w: "九乃竪琴", a: "風", wt: "琴"},
+        {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
     ];
 
-    const weaponReqs = [
-        { id: "w_shinto", label: "終末(神)超越220", cost: 20 },
-        { id: "w_magna", label: "終末(マ)超越220", cost: 20 },
-        { id: "w_world", label: "破壊武器 5凸", cost: 20 }
-    ];
-
-    const data = [
-        { attr: "火", class: "attr-fire", sages: ["アラナン", "フラウ"] },
-        { attr: "水", class: "attr-water", sages: ["マリア・テレサ", "ハーゼリーラ"] },
-        { attr: "土", class: "attr-earth", sages: ["カイム", "ロベリア"] },
-        { attr: "風", class: "attr-wind", sages: ["エスタリオラ", "カッツェリーラ"] },
-        { attr: "光", class: "attr-light", sages: ["ガイゼンボーガ"] },
-        { attr: "闇", class: "attr-dark", sages: ["ニーア"] }
-    ];
-
-    const grid = document.getElementById('app-grid');
-
-    data.forEach((group, gIdx) => {
-        let html = `<div class="card ${group.class}"><h3>${group.attr}属性</h3>`;
-        group.sages.forEach((sage, sIdx) => {
-            html += `<div class="group-title">賢者：${sage}</div><div class="item-grid">`;
-            isshizueSteps.forEach(step => {
-                const id = `c-${gIdx}-${sIdx}-${step.id}`;
-                html += `<label><input type="checkbox" class="q-check" id="${id}" data-cost="${step.cost}" onchange="saveAndCalc()">礎:${step.label}(${step.cost})</label>`;
+    function render() {
+        const container = document.getElementById('main-container');
+        container.innerHTML = '';
+        
+        if (currentTab === 'quartz') {
+            const sages = [["アラナン","フラウ"],["テレサ","ハーゼ"],["カイム","ロベリア"],["エスタ","カッツェ"],["ガイゼン"],["ニーア"]];
+            attrMap.forEach((a, i) => {
+                let html = `<div class="card attr-${a}"><h3>${a}属性</h3>`;
+                sages[i].forEach((s, si) => {
+                    html += `<div class="group-title">${s}</div><div class="item-grid">`;
+                    [5,5,10,20,20,30].forEach((c, ci) => html += `<label><input type="checkbox" class="q-check" data-cost="${c}" id="q-${i}-${si}-${ci}" onchange="saveData()">礎:${ci}凸(${c})</label>`);
+                    html += `<label><input type="checkbox" class="q-check" data-cost="30" id="q-${i}-${si}-abi" onchange="saveData()">4アビ(30)</label></div>`;
+                });
+                html += `<div class="group-title">共通</div><div class="item-grid">`;
+                ["終末(神)","終末(マ)","破壊"].forEach(n => html += `<label><input type="checkbox" class="q-check" data-cost="20" id="q-${i}-${n}" onchange="saveData()">${n}(20)</label>`);
+                html += `</div></div>`;
+                container.innerHTML += html;
             });
-            const abiId = `c-${gIdx}-${sIdx}-abi`;
-            html += `<label><input type="checkbox" class="q-check" id="${abiId}" data-cost="30" onchange="saveAndCalc()">第4アビ(30)</label>`;
-            html += `</div>`;
-        });
-        html += `<div class="group-title">属性共通武器</div><div class="item-grid">`;
-        weaponReqs.forEach((item, wIdx) => {
-            const wid = `c-${gIdx}-w-${item.id}`;
-            html += `<label><input type="checkbox" class="q-check" id="${wid}" data-cost="${item.cost}" onchange="saveAndCalc()">${item.label}(${item.cost})</label>`;
-        });
-        html += `</div><div class="subtotal">属性未完了: <span class="attr-subtotal">0</span></div></div>`;
-        grid.innerHTML += html;
-    });
-
-    function saveAndCalc() {
-        let total = 0;
-        const stock = parseInt(document.getElementById('stock').value) || 0;
-        const checks = {};
-
-        document.querySelectorAll('.card').forEach(card => {
-            let subtotal = 0;
-            card.querySelectorAll('.q-check').forEach(cb => {
-                checks[cb.id] = cb.checked;
-                if (!cb.checked) subtotal += parseInt(cb.dataset.cost);
+        } 
+        else if (currentTab === 'shoukaku') {
+            weaponMaster.forEach((m, i) => {
+                let html = `<div class="card attr-${m.a}"><h3>極星器：${m.wt}</h3><div class="item-grid">`;
+                const steps = [{l:"4凸解放", c:45}, {l:"5凸解放", c:80}, {l:"覚醒強化", c:170}];
+                steps.forEach((s, si) => html += `<label><input type="checkbox" class="q-check" data-cost="${s.c}" id="s-${i}-${si}" onchange="saveData()">${s.l}(${s.c})</label>`);
+                html += `</div></div>`;
+                container.innerHTML += html;
             });
-            card.querySelector('.attr-subtotal').textContent = subtotal;
-            total += subtotal;
-        });
-
-        localStorage.setItem('gbf_q_checks', JSON.stringify(checks));
-        localStorage.setItem('gbf_q_stock', stock);
-
-        const needed = Math.max(0, total - stock);
-        document.getElementById('grand-total').textContent = total;
-        document.getElementById('needed-total').textContent = needed;
-        document.getElementById('gw-count').textContent = Math.ceil(needed / 45) + " 回分";
+        }
+        else if (currentTab === 'tense') {
+            weaponMaster.forEach((t) => {
+                let html = `<div class="card attr-${t.a}"><h3>${t.n} (${t.j})</h3>`;
+                html += `<div class="item-grid">`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="50" id="t-${t.id}-c" onchange="saveData()">超越Lv120解放 (50)</label>`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-k" onchange="saveData()">極星器 4凸 (20)</label>`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-l" onchange="saveData()">光跡武器 Lv4強化 (20)</label>`;
+                html += `</div>`;
+                html += `<div class="card-calc">
+                            <div>
+                                <div>必要:<span id="need-${t.id}">0</span></div>
+                                <div>所持:<input type="number" id="stock-${t.id}" class="card-stock-input" value="0" oninput="saveData()"></div>
+                            </div>
+                            <div class="card-result">
+                                <div>不足:<span id="diff-${t.id}" class="txt-red">0</span></div>
+                                <div class="weapon-needed">要:${t.w}<br><span id="weap-${t.id}">0</span>本（無凸換算）</div>
+                            </div>
+                         </div></div>`;
+                container.innerHTML += html;
+            });
+        }
+        loadData();
     }
 
-    function load() {
-        const savedChecks = JSON.parse(localStorage.getItem('gbf_q_checks') || '{}');
-        const savedStock = localStorage.getItem('gbf_q_stock') || 0;
-        document.getElementById('stock').value = savedStock;
-        Object.keys(savedChecks).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.checked = savedChecks[id];
-        });
-        saveAndCalc();
+    function switchTab(tab) {
+        currentTab = tab;
+        document.body.className = 'tab-' + tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + tab).classList.add('active');
+        
+        const unitLabel = document.getElementById('unit-label');
+        const headerTotalLabel = document.getElementById('header-total-label');
+        
+        if(tab === 'tense') {
+            unitLabel.textContent = '必要個数(全体)';
+            headerTotalLabel.textContent = '全体必要数';
+        } else {
+            unitLabel.textContent = tab === 'quartz' ? '古戦場換算' : '必要個数';
+            headerTotalLabel.textContent = '未完了合計';
+        }
+        render();
     }
-    load();
+
+    function saveData() {
+        let grandTotal = 0;
+        const checks = JSON.parse(localStorage.getItem('gbf_all_checks') || '{}');
+        const cardStocks = JSON.parse(localStorage.getItem('gbf_card_stocks') || '{}');
+
+        document.querySelectorAll('.q-check').forEach(cb => {
+            checks[cb.id] = cb.checked;
+        });
+
+        Object.keys(checks).forEach(id => {
+            if (!checks[id]) {
+                const el = document.getElementById(id);
+                if (el) grandTotal += parseInt(el.dataset.cost);
+            }
+        });
+
+        if (currentTab === 'tense') {
+            weaponMaster.forEach(t => {
+                let cardNeed = 0;
+                [t.id + '-c', t.id + '-k', t.id + '-l'].forEach(suffix => {
+                    const cb = document.getElementById('t-' + suffix);
+                    if (cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost);
+                });
+                const sInput = document.getElementById('stock-' + t.id);
+                const sVal = sInput ? (parseInt(sInput.value) || 0) : 0;
+                cardStocks[t.id] = sVal;
+                const diff = Math.max(0, cardNeed - sVal);
+                if(document.getElementById(`need-${t.id}`)) {
+                    document.getElementById(`need-${t.id}`).textContent = cardNeed;
+                    document.getElementById(`diff-${t.id}`).textContent = diff;
+                    document.getElementById(`weap-${t.id}`).textContent = Math.ceil(diff / 5) * 4;
+                }
+            });
+        }
+
+        localStorage.setItem('gbf_all_checks', JSON.stringify(checks));
+        localStorage.setItem('gbf_card_stocks', JSON.stringify(cardStocks));
+        document.getElementById('grand-total').textContent = grandTotal;
+        
+        if (currentTab !== 'tense') {
+            const stock = parseInt(document.getElementById('stock').value) || 0;
+            localStorage.setItem(`gbf_stock_${currentTab}`, stock);
+            const needed = Math.max(0, grandTotal - stock);
+            document.getElementById('needed-total').textContent = needed;
+            document.getElementById('gw-count').textContent = currentTab === 'quartz' ? Math.ceil(needed / 45) + "回分" : needed + "個";
+        } else {
+            document.getElementById('gw-count').textContent = grandTotal + "個";
+        }
+    }
+
+    function loadData() {
+        const checks = JSON.parse(localStorage.getItem('gbf_all_checks') || '{}');
+        const cardStocks = JSON.parse(localStorage.getItem('gbf_card_stocks') || '{}');
+        document.querySelectorAll('.q-check').forEach(cb => {
+            if (checks[cb.id] !== undefined) cb.checked = checks[cb.id];
+        });
+        if (currentTab === 'tense') {
+            weaponMaster.forEach(t => {
+                const sInput = document.getElementById('stock-' + t.id);
+                if (sInput && cardStocks[t.id] !== undefined) sInput.value = cardStocks[t.id];
+            });
+        } else {
+            const stockEl = document.getElementById('stock');
+            if (stockEl) stockEl.value = localStorage.getItem(`gbf_stock_${currentTab}`) || 0;
+        }
+        saveData();
+    }
+    render();
 </script>
 </body>
-
 </html>
