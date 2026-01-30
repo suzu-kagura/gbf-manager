@@ -16,15 +16,12 @@
         }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 60px; }
         
-        /* ヘッダー・メニュー周り */
         .tab-menu { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; background: #f0f2f5; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
         .tab-btn.active { background: var(--accent); color: white; }
 
-        /* データ管理ボタン（タブの横） */
         .backup-group { display: flex; gap: 4px; margin-left: 10px; border-left: 1px solid #ccc; padding-left: 10px; }
         .backup-btn { font-size: 0.7em; padding: 6px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; cursor: pointer; font-weight: bold; color: #555; }
-        .backup-btn:hover { background: #eee; }
         
         .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
         .calc-box { text-align: center; min-width: 90px; }
@@ -33,10 +30,11 @@
         .needed-val { color: var(--needed); }
         .stock-input { font-size: 1.2em; width: 85px; text-align: center; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; padding: 4px; }
         
+        /* 表示制御 */
         .shoukaku-only { display: none; }
         body.tab-shoukaku .shoukaku-only { display: block; }
+        body.tab-tense .header-stock-box { display: none; } /* 天星タブではヘッダー所持数を隠す */
 
-        /* カード・グリッド */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #ddd; overflow: hidden; position: relative; }
         .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
@@ -68,8 +66,8 @@
     <button class="tab-btn" id="btn-tense" onclick="switchTab('tense')">天星</button>
     
     <div class="backup-group">
-        <button class="backup-btn" title="エクスポート" onclick="exportData()">保存</button>
-        <button class="backup-btn" title="インポート" onclick="document.getElementById('importFile').click()">復元</button>
+        <button class="backup-btn" onclick="exportData()">保存</button>
+        <button class="backup-btn" onclick="document.getElementById('importFile').click()">復元</button>
         <input type="file" id="importFile" style="display:none" onchange="importData(event)">
     </div>
 </div>
@@ -78,7 +76,7 @@
     <div class="calc-box"><label id="header-total-label">目標個数</label><div class="val" id="grand-total">0</div></div>
     <div class="calc-box shoukaku-only"><label>武器所持晶核</label><div class="val" id="weapon-conv-val">0</div></div>
     <div class="calc-box header-stock-box"><label id="header-stock-label">所持数</label><input type="number" id="stock" class="stock-input" value="0" oninput="saveData()"></div>
-    <div class="calc-box header-needed-box"><label>不足分</label><div class="val needed-val" id="needed-total">0</div></div>
+    <div class="calc-box header-needed-box"><label id="header-needed-label">不足分</label><div class="val needed-val" id="needed-total">0</div></div>
 </div>
 
 <div id="main-container" class="grid"></div>
@@ -100,18 +98,15 @@
         {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
     ];
 
-    // --- データ入出力 ---
     function exportData() {
         const data = localStorage.getItem(STORAGE_KEY);
-        if (!data) { alert("保存されているデータがありません。"); return; }
+        if (!data) { alert("データがありません。"); return; }
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
         a.href = url;
-        a.download = `GBF_Manager_Backup_${date}.json`;
+        a.download = `GBF_Manager_Backup_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
-        URL.revokeObjectURL(url);
     }
 
     function importData(event) {
@@ -120,14 +115,9 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
-                const json = JSON.parse(e.target.result);
-                if (confirm("現在のデータを上書きしてバックアップを復元しますか？")) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-                    location.reload();
-                }
-            } catch (err) {
-                alert("ファイルの形式が正しくありません。");
-            }
+                localStorage.setItem(STORAGE_KEY, e.target.result);
+                location.reload();
+            } catch (err) { alert("失敗しました。"); }
         };
         reader.readAsText(file);
     }
@@ -182,10 +172,11 @@
         document.getElementById('btn-' + tab).classList.add('active');
         const hLabel = document.getElementById('header-total-label');
         const sLabel = document.getElementById('header-stock-label');
+        const nLabel = document.getElementById('header-needed-label');
         
-        if(tab === 'shoukaku') { hLabel.textContent = '目標晶核'; sLabel.textContent = '所持晶核'; }
-        else if(tab === 'tense') { hLabel.textContent = '必要欠片(合計)'; sLabel.textContent = '所持欠片'; }
-        else { hLabel.textContent = '目標個数'; sLabel.textContent = '所持数'; }
+        if(tab === 'shoukaku') { hLabel.textContent = '目標晶核'; sLabel.textContent = '所持晶核'; nLabel.textContent = '不足分'; }
+        else if(tab === 'tense') { hLabel.textContent = '必要欠片(合計)'; nLabel.textContent = '実質不足分'; }
+        else { hLabel.textContent = '目標個数'; sLabel.textContent = '所持数'; nLabel.textContent = '不足分'; }
         render();
     }
 
@@ -197,7 +188,9 @@
         if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { data.stocks[`s-${i}`] = parseInt(document.getElementById(`sstock-${i}`).value) || 0; });
         if(currentTab === 'tense') weaponMaster.forEach((m, i) => { data.stocks[`t-${i}`] = parseInt(document.getElementById(`tstock-${i}`).value) || 0; });
         
-        data.headStocks[currentTab] = parseInt(document.getElementById('stock').value) || 0;
+        const stockEl = document.getElementById('stock');
+        if (currentTab !== 'tense') data.headStocks[currentTab] = parseInt(stockEl.value) || 0;
+
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         calculate(data);
     }
@@ -218,19 +211,24 @@
             document.getElementById('weapon-conv-val').textContent = weaponConvTotal;
         }
         if (currentTab === 'tense') {
+            let totalShortage = 0;
             weaponMaster.forEach((t, i) => {
                 const count = data.stocks[`t-${i}`] || 0;
                 let need = 0;
                 [0,1,2,3].forEach(si => { const cb = document.getElementById(`t-${i}-${si}`); if(cb && !cb.checked) need += parseInt(cb.dataset.cost); });
                 const currentKakeStock = Math.floor(count / 4) * 5;
                 const diffKake = Math.max(0, need - currentKakeStock);
+                totalShortage += diffKake;
                 document.getElementById(`tdiff-${i}`).textContent = diffKake;
                 document.getElementById(`tweap-${i}`).textContent = Math.max(0, (Math.ceil(diffKake / 5) * 4) - (count % 4));
             });
+            // 天星タブのヘッダー「実質不足分」は、各カードの不足欠片の合計を表示
+            document.getElementById('needed-total').textContent = totalShortage;
+        } else {
+            const headStock = data.headStocks[currentTab] || 0;
+            document.getElementById('needed-total').textContent = Math.max(0, grandTotal - (headStock + weaponConvTotal));
         }
         document.getElementById('grand-total').textContent = grandTotal;
-        const headStock = data.headStocks[currentTab] || 0;
-        document.getElementById('needed-total').textContent = Math.max(0, grandTotal - (headStock + weaponConvTotal));
     }
 
     function loadData() {
