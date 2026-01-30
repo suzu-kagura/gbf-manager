@@ -71,6 +71,8 @@
 
 <script>
     let currentTab = 'quartz';
+    const STORAGE_KEY = 'gbf_manager_data_unified'; // 統合キー
+    
     const weaponMaster = [
         {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
         {id: 2, n: "二の欠片", j: "ソーン", w: "二乃弓", a: "光", wt: "弓"},
@@ -142,32 +144,52 @@
     }
 
     function saveData() {
-        let grandTotal = 0;
-        const checks = JSON.parse(localStorage.getItem('gbf_all_checks_v4') || '{}');
-        const stocks = JSON.parse(localStorage.getItem('gbf_all_stocks_v4') || '{}');
+        const data = {
+            checks: {},
+            stocks: {},
+            headStocks: JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').headStocks || {}
+        };
 
-        document.querySelectorAll('.q-check').forEach(cb => { 
-            checks[cb.id] = cb.checked; 
-            if(!cb.checked) grandTotal += parseInt(cb.dataset.cost); 
-        });
+        // 現在表示されているチェックボックスと個別入力を取得
+        document.querySelectorAll('.q-check').forEach(cb => { data.checks[cb.id] = cb.checked; });
+        if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { data.stocks[`s-${i}`] = parseInt(document.getElementById(`sstock-${i}`).value) || 0; });
+        if(currentTab === 'tense') weaponMaster.forEach((m, i) => { data.stocks[`t-${i}`] = parseInt(document.getElementById(`tstock-${i}`).value) || 0; });
+        
+        const headStock = parseInt(document.getElementById('stock').value) || 0;
+        data.headStocks[currentTab] = headStock;
+
+        // 既存のデータを壊さないようマージ
+        const oldData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
+        const finalData = {
+            checks: {...oldData.checks, ...data.checks},
+            stocks: {...oldData.stocks, ...data.stocks},
+            headStocks: {...oldData.headStocks, ...data.headStocks}
+        };
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
+        calculate(finalData);
+    }
+
+    function calculate(data) {
+        let grandTotal = 0;
+        document.querySelectorAll('.q-check').forEach(cb => { if(!cb.checked) grandTotal += parseInt(cb.dataset.cost); });
 
         let weaponConvTotal = 0;
         if (currentTab === 'shoukaku') {
             weaponMaster.forEach((m, i) => {
-                const count = parseInt(document.getElementById(`sstock-${i}`).value) || 0;
-                stocks[`s-${i}`] = count;
-                weaponConvTotal += (count * 15);
+                const count = data.stocks[`s-${i}`] || 0;
+                const conv = count * 15;
+                weaponConvTotal += conv;
                 let cardNeed = 0;
                 [0,1,2,3].forEach(si => { const cb = document.getElementById(`s-${i}-${si}`); if(cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost); });
-                document.getElementById(`sdiff-${i}`).textContent = Math.max(0, cardNeed - (count * 15));
+                document.getElementById(`sdiff-${i}`).textContent = Math.max(0, cardNeed - conv);
             });
             document.getElementById('weapon-conv-val').textContent = weaponConvTotal;
         }
 
         if (currentTab === 'tense') {
             weaponMaster.forEach((t, i) => {
-                const count = parseInt(document.getElementById(`tstock-${i}`).value) || 0;
-                stocks[`t-${i}`] = count;
+                const count = data.stocks[`t-${i}`] || 0;
                 let need = 0;
                 [0,1,2,3].forEach(si => { const cb = document.getElementById(`t-${i}-${si}`); if(cb && !cb.checked) need += parseInt(cb.dataset.cost); });
                 const currentKakeStock = Math.floor(count / 4) * 5;
@@ -178,22 +200,22 @@
             });
         }
 
-        localStorage.setItem('gbf_all_checks_v4', JSON.stringify(checks));
-        localStorage.setItem('gbf_all_stocks_v4', JSON.stringify(stocks));
         document.getElementById('grand-total').textContent = grandTotal;
-        const headStock = parseInt(document.getElementById('stock').value) || 0;
-        localStorage.setItem(`gbf_head_stock_${currentTab}`, headStock);
+        const headStock = data.headStocks[currentTab] || 0;
         document.getElementById('needed-total').textContent = Math.max(0, grandTotal - (headStock + weaponConvTotal));
     }
 
     function loadData() {
-        const checks = JSON.parse(localStorage.getItem('gbf_all_checks_v4') || '{}');
-        const stocks = JSON.parse(localStorage.getItem('gbf_all_stocks_v4') || '{}');
-        document.querySelectorAll('.q-check').forEach(cb => { if(checks[cb.id] !== undefined) cb.checked = checks[cb.id]; });
-        if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { const el = document.getElementById(`sstock-${i}`); if(el) el.value = stocks[`s-${i}`] || 0; });
-        if(currentTab === 'tense') weaponMaster.forEach((m, i) => { const el = document.getElementById(`tstock-${i}`); if(el) el.value = stocks[`t-${i}`] || 0; });
-        document.getElementById('stock').value = localStorage.getItem(`gbf_head_stock_${currentTab}`) || 0;
-        saveData();
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return;
+        const data = JSON.parse(raw);
+        
+        document.querySelectorAll('.q-check').forEach(cb => { if(data.checks[cb.id] !== undefined) cb.checked = data.checks[cb.id]; });
+        if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { const el = document.getElementById(`sstock-${i}`); if(el) el.value = data.stocks[`s-${i}`] || 0; });
+        if(currentTab === 'tense') weaponMaster.forEach((m, i) => { const el = document.getElementById(`tstock-${i}`); if(el) el.value = data.stocks[`t-${i}`] || 0; });
+        
+        document.getElementById('stock').value = data.headStocks[currentTab] || 0;
+        calculate(data);
     }
     render();
 </script>
