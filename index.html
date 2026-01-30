@@ -2,273 +2,435 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GBF Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GBF 統合管理ツール v2.1</title>
     <style>
+        /* --- 統合基盤スタイル --- */
         :root {
-            --fire: #ffeded; --fire-line: #f44336;
-            --water: #e3f2fd; --water-line: #2196f3;
-            --earth: #fdf5e6; --earth-line: #795548;
-            --wind: #e8f5e9; --wind-line: #4caf50;
-            --light: #fffde7; --light-line: #fbc02d;
-            --dark: #f3e5f5; --dark-line: #9c27b0;
-            --accent: #2c3e50; --needed: #e74c3c;
+            --gbf-blue: #2a82b9;
+            --gbf-dark: #1a2430;
+            --gbf-gold: #e1ad5f;
+            --bg-color: #f0f2f5;
+            --fire: #ff4d4d; --fire-bg: #ffeded;
+            --water: #3399ff; --water-bg: #e3f2fd;
+            --earth: #b37700; --earth-bg: #fdf5e6;
+            --wind: #2eb82e; --wind-bg: #e8f5e9;
+            --light: #fbc02d; --light-bg: #fffde7;
+            --dark: #9c27b0; --dark-bg: #f3e5f5;
+            --danger: #e74c3c; --success: #2ecc71;
         }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 60px; }
-        
-        /* ヘッダー・メニュー周り */
-        .tab-menu { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 8px; padding: 10px; background: #f0f2f5; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
-        .tab-btn.active { background: var(--accent); color: white; }
 
-        /* データ管理ボタン（タブの横） */
-        .backup-group { display: flex; gap: 4px; margin-left: 10px; border-left: 1px solid #ccc; padding-left: 10px; }
-        .backup-btn { font-size: 0.7em; padding: 6px 10px; border-radius: 6px; border: 1px solid #bbb; background: #fff; cursor: pointer; font-weight: bold; color: #555; }
-        .backup-btn:hover { background: #eee; }
-        
-        .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; }
-        .calc-box { text-align: center; min-width: 90px; }
-        .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; font-weight: bold; }
-        .val { font-size: 1.4em; font-weight: bold; }
-        .needed-val { color: var(--needed); }
-        .stock-input { font-size: 1.2em; width: 85px; text-align: center; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; padding: 4px; }
-        
-        .shoukaku-only { display: none; }
-        body.tab-shoukaku .shoukaku-only { display: block; }
+        body {
+            font-family: sans-serif;
+            background: var(--bg-color);
+            margin: 0; padding: 0; padding-bottom: 80px;
+            color: #333;
+        }
 
-        /* 天星タブの場合に所持欄を非表示にする設定 */
-        body.tab-tense .header-stock-box { display: none; }
+        /* 下部ナビゲーション */
+        .main-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+            background: var(--gbf-dark); display: flex; z-index: 10000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        .nav-btn {
+            flex: 1; border: none; background: none; color: #888;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px; cursor: pointer;
+        }
+        .nav-btn.active { color: var(--gbf-gold); }
+        .nav-btn .icon { font-size: 24px; margin-bottom: 2px; }
 
-        /* カード・グリッド */
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; }
-        .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #ddd; overflow: hidden; position: relative; }
-        .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
-        .attr-火 { background-color: var(--fire); } .attr-火::before { background-color: var(--fire-line); }
-        .attr-水 { background-color: var(--water); } .attr-水::before { background-color: var(--water-line); }
-        .attr-土 { background-color: var(--earth); } .attr-土::before { background-color: var(--earth-line); }
-        .attr-風 { background-color: var(--wind); } .attr-風::before { background-color: var(--wind-line); }
-        .attr-光 { background-color: var(--light); } .attr-光::before { background-color: var(--light-line); }
-        .attr-闇 { background-color: var(--dark); } .attr-闇::before { background-color: var(--dark-line); }
+        .app-section { display: none; animation: fadeIn 0.3s ease; }
+        .app-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        .group-title { font-size: 0.8em; font-weight: bold; margin: 10px 0 5px; background: rgba(255,255,255,0.5); padding: 4px 10px; border-radius: 4px; border-left: 4px solid #444; }
-        .item-grid { display: grid; grid-template-columns: 1fr; gap: 4px; }
-        label { display: flex; align-items: center; background: rgba(255,255,255,0.8); padding: 10px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em; border: 1px solid rgba(0,0,0,0.05); }
-        label:has(input:checked) { background: rgba(0,0,0,0.05); color: #999; text-decoration: line-through; border-color: transparent; }
-        input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
+        /* --- Tool 1 (Manager) 専用 --- */
+        .tab-menu { display: flex; justify-content: center; gap: 5px; padding: 10px; background: #fff; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
+        .sub-tab { padding: 8px 12px; border: none; border-radius: 20px; background: #ddd; font-size: 11px; font-weight: bold; }
+        .sub-tab.active { background: var(--gbf-dark); color: white; }
+        .backup-btn { background: #666; color: #fff; font-size: 10px; padding: 8px 10px; border-radius: 6px; border: none; font-weight: bold; }
         
-        .card-calc { margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; }
-        .card-stock-input { width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; }
-        .card-result { font-weight: bold; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 10px; }
-        .txt-red { color: var(--needed); }
-        .stock-label { font-size: 0.75em; color: #666; display: block; margin-top: 2px; }
+        .header-box { background: white; margin: 10px; padding: 15px; border-radius: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .val-unit { text-align: center; }
+        .val-unit label { font-size: 10px; color: #666; display: block; }
+        .val-num { font-size: 1.2em; font-weight: bold; }
+        .val-num.red { color: var(--danger); }
+        
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; padding: 10px; }
+        .m-card { background: white; border-radius: 8px; padding: 12px; border-top: 5px solid #ccc; }
+        .m-card.火 { border-color: var(--fire); background: var(--fire-bg); }
+        .m-card.水 { border-color: var(--water); background: var(--water-bg); }
+        .m-card.土 { border-color: var(--earth); background: var(--earth-bg); }
+        .m-card.風 { border-color: var(--wind); background: var(--wind-bg); }
+        .m-card.光 { border-color: var(--light); background: var(--light-bg); }
+        .m-card.闇 { border-color: var(--dark); background: var(--dark-bg); }
+        .item-list label { display: flex; align-items: center; padding: 8px; background: rgba(255,255,255,0.7); border-radius: 4px; font-size: 13px; margin-bottom: 2px; }
+
+        /* --- Tool 2 (Trans) 専用 --- */
+        .t-container { padding: 10px; }
+        .t-card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .char-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+        
+        /* COMPLETEスタンプのスタイル */
+        .char-item { border: 1px solid #eee; padding: 10px; border-radius: 8px; border-top: 4px solid #ccc; position: relative; overflow: hidden; }
+        .char-item.finished { background: #f8f9fa; opacity: 0.7; }
+        .char-item.finished::after { 
+            content: "COMPLETE"; 
+            position: absolute; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%) rotate(-20deg); 
+            color: rgba(46, 204, 113, 0.4); 
+            font-weight: bold; font-size: 1.4rem; 
+            border: 3px solid; padding: 2px 8px; 
+            pointer-events: none; z-index: 10; 
+        }
+
+        .t-tabs { display: flex; overflow-x: auto; gap: 5px; padding: 5px 0; }
+        .t-tab-btn { padding: 6px 12px; border: none; border-radius: 10px; background: #eee; white-space: nowrap; font-size: 11px; }
+        .t-tab-btn.active { background: var(--gbf-blue); color: white; }
+        .t-input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; margin-top: 10px; }
+        .t-input-grid input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        th, td { border-bottom: 1px solid #eee; padding: 8px 4px; text-align: left; }
+        .status-ng { color: var(--danger); font-weight: bold; }
+        
+        /* 共通ボタン */
+        .btn-action { padding: 12px; border: none; border-radius: 5px; color: white; font-weight: bold; cursor: pointer; display: inline-block; text-align: center; text-decoration: none; font-size: 13px; }
     </style>
 </head>
-<body class="tab-quartz">
+<body>
 
-<div class="tab-menu">
-    <button class="tab-btn active" id="btn-quartz" onclick="switchTab('quartz')">クォーツ</button>
-    <button class="tab-btn" id="btn-shoukaku" onclick="switchTab('shoukaku')">晶核</button>
-    <button class="tab-btn" id="btn-tense" onclick="switchTab('tense')">天星</button>
-    
-    <div class="backup-group">
-        <button class="backup-btn" title="エクスポート" onclick="exportData()">保存</button>
-        <button class="backup-btn" title="インポート" onclick="document.getElementById('importFile').click()">復元</button>
-        <input type="file" id="importFile" style="display:none" onchange="importData(event)">
+<nav class="main-nav">
+    <button class="nav-btn active" onclick="switchMainTab('manager', this)">
+        <span class="icon">📦</span><span>素材管理</span>
+    </button>
+    <button class="nav-btn" onclick="switchMainTab('trans', this)">
+        <span class="icon">⚡</span><span>限界超越</span>
+    </button>
+</nav>
+
+<section id="section-manager" class="app-section active">
+    <div class="tab-menu">
+        <button class="sub-tab active" id="btn-quartz" onclick="switchMSubTab('quartz')">クォーツ</button>
+        <button class="sub-tab" id="btn-shoukaku" onclick="switchMSubTab('shoukaku')">晶核</button>
+        <button class="sub-tab" id="btn-tense" onclick="switchMSubTab('tense')">天星</button>
+        <div style="display:flex; gap:5px; margin-left: 5px;">
+            <button class="backup-btn" onclick="exportMData()">保存</button>
+            <button class="backup-btn" onclick="document.getElementById('importFileM').click()">復元</button>
+            <input type="file" id="importFileM" style="display:none" onchange="importMData(event)">
+        </div>
     </div>
-</div>
 
-<div class="header">
-    <div class="calc-box"><label id="header-total-label">目標個数</label><div class="val" id="grand-total">0</div></div>
-    <div class="calc-box shoukaku-only"><label>武器所持晶核</label><div class="val" id="weapon-conv-val">0</div></div>
-    <div class="calc-box header-stock-box"><label id="header-stock-label">所持数</label><input type="number" id="stock" class="stock-input" value="0" oninput="saveData()"></div>
-    <div class="calc-box header-needed-box"><label id="header-needed-label">不足分</label><div class="val needed-val" id="needed-total">0</div></div>
-</div>
+    <div class="header-box">
+        <div class="val-unit"><label id="m-total-label">目標個数</label><div class="val-num" id="m-grand-total">0</div></div>
+        <div id="m-weapon-box" class="val-unit" style="display:none"><label>武器所持晶核</label><div class="val-num" id="m-weapon-val">0</div></div>
+        <div id="m-stock-box" class="val-unit"><label id="m-stock-label">所持数</label><input type="number" id="m-stock-input" style="width:70px; text-align:center" oninput="saveM()"></div>
+        <div class="val-unit"><label id="m-need-label">不足分</label><div class="val-num red" id="m-needed-total">0</div></div>
+    </div>
 
-<div id="main-container" class="grid"></div>
+    <div id="m-container" class="grid-cards"></div>
+</section>
+
+<section id="section-trans" class="app-section">
+    <div class="t-container">
+        <div class="t-card">
+            <h3 style="margin:0 0 10px 0; font-size:14px">① ファイルバックアップ</h3>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-action" style="background:#555; flex:1;" onclick="downloadT()">設定を保存</button>
+                <button class="btn-action" style="background:#555; flex:1;" onclick="document.getElementById('importFileT').click()">設定を読込</button>
+                <input type="file" id="importFileT" style="display:none" accept=".json" onchange="uploadTFile(event)">
+            </div>
+        </div>
+
+        <div class="t-card">
+            <h3 style="margin:0 0 10px 0; font-size:14px">② 各キャラの進捗設定</h3>
+            <div class="char-grid" id="t-char-settings"></div>
+        </div>
+
+        <div class="t-card">
+            <h3 style="margin:0 0 10px 0; font-size:14px">③ 素材の所持数入力</h3>
+            <div class="t-tabs" id="t-attr-tabs">
+                <button class="t-tab-btn active" onclick="switchTInputTab('Common')">共通</button>
+                <button class="t-tab-btn" onclick="switchTInputTab('火')">火</button>
+                <button class="t-tab-btn" onclick="switchTInputTab('水')">水</button>
+                <button class="t-tab-btn" onclick="switchTInputTab('土')">土</button>
+                <button class="t-tab-btn" onclick="switchTInputTab('風')">風</button>
+                <button class="t-tab-btn" onclick="switchTInputTab('光')">光</button>
+                <button class="t-tab-btn" onclick="switchTInputTab('闇')">闇</button>
+            </div>
+            <div class="t-input-grid" id="t-stock-inputs"></div>
+        </div>
+
+        <div class="t-card">
+            <h3 style="margin:0 0 10px 0; font-size:14px">④ 不足素材の集計結果</h3>
+            <div id="t-result-container"></div>
+            <button class="btn-action" style="background:var(--success); width:100%; margin-top:15px; font-size: 16px;" onclick="saveT()">ブラウザに保存（確定）</button>
+        </div>
+    </div>
+</section>
 
 <script>
-    let currentTab = 'quartz';
-    const STORAGE_KEY = 'gbf_manager_data_unified';
+/* JavaScript部分は変更なし */
+/* ==========================================
+   共通：メインタブ切り替え
+   ========================================== */
+function switchMainTab(target, btn) {
+    document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + target).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo(0,0);
+}
+
+/* ==========================================
+   Tool 1: GBF Manager (Quartz/Shoukaku/Tense)
+   ========================================== */
+let mCurrentTab = 'quartz';
+const M_STORAGE_KEY = 'gbf_manager_data_unified';
+const weaponMaster = [
+    {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
+    {id: 2, n: "二の欠片", j: "ソーン", w: "二乃弓", a: "光", wt: "弓"},
+    {id: 3, n: "三の欠片", j: "サラーサ", w: "三乃斧", a: "土", wt: "斧"},
+    {id: 4, n: "四の欠片", j: "カトル", w: "四乃短剣", a: "水", wt: "短剣"},
+    {id: 5, n: "五の欠片", j: "フュンフ", w: "五乃杖", a: "光", wt: "杖"},
+    {id: 6, n: "六の欠片", j: "シス", w: "六乃拳", a: "闇", wt: "拳"},
+    {id: 7, n: "七の欠片", j: "シエテ", w: "七乃剣", a: "風", wt: "剣"},
+    {id: 8, n: "八の欠片", j: "オクトー", w: "八乃刀", a: "土", wt: "刀"},
+    {id: 9, n: "九の欠片", j: "ニオ", w: "九乃竪琴", a: "風", wt: "琴"},
+    {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
+];
+
+function switchMSubTab(tab) {
+    mCurrentTab = tab;
+    document.querySelectorAll('.sub-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + tab).classList.add('active');
+    document.getElementById('m-weapon-box').style.display = (tab === 'shoukaku') ? 'block' : 'none';
+    document.getElementById('m-stock-box').style.display = (tab === 'tense') ? 'none' : 'block';
     
-    const weaponMaster = [
-        {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
-        {id: 2, n: "二の欠片", j: "ソーン", w: "二乃弓", a: "光", wt: "弓"},
-        {id: 3, n: "三の欠片", j: "サラーサ", w: "三乃斧", a: "土", wt: "斧"},
-        {id: 4, n: "四の欠片", j: "カトル", w: "四乃短剣", a: "水", wt: "短剣"},
-        {id: 5, n: "五の欠片", j: "フュンフ", w: "五乃杖", a: "光", wt: "杖"},
-        {id: 6, n: "六の欠片", j: "シス", w: "六乃拳", a: "闇", wt: "拳"},
-        {id: 7, n: "七の欠片", j: "シエテ", w: "七乃剣", a: "風", wt: "剣"},
-        {id: 8, n: "八の欠片", j: "オクトー", w: "八乃刀", a: "土", wt: "刀"},
-        {id: 9, n: "九の欠片", j: "ニオ", w: "九乃竪琴", a: "風", wt: "琴"},
-        {id: 10, n: "十の欠片", j: "エッセル", w: "十乃銃", a: "火", wt: "銃"}
-    ];
+    const labels = {
+        quartz: ["目標個数", "所持数", "不足分"],
+        shoukaku: ["目標晶核", "所持晶核", "不足分"],
+        tense: ["必要欠片(合計)", "", "実質不足分"]
+    };
+    document.getElementById('m-total-label').textContent = labels[tab][0];
+    document.getElementById('m-stock-label').textContent = labels[tab][1];
+    document.getElementById('m-need-label').textContent = labels[tab][2];
+    
+    renderM();
+}
 
-    // --- データ入出力 ---
-    function exportData() {
-        const data = localStorage.getItem(STORAGE_KEY);
-        if (!data) { alert("保存されているデータがありません。"); return; }
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        const date = new Date().toLocaleDateString('ja-JP').replace(/\//g, '-');
-        a.href = url;
-        a.download = `GBF_Manager_Backup_${date}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+function renderM() {
+    const container = document.getElementById('m-container');
+    container.innerHTML = '';
+    if (mCurrentTab === 'quartz') {
+        const sages = [{a:"火", s:["アラナン","フラウ"]},{a:"水",s:["テレサ","ハーゼ"]},{a:"土",s:["カイム","ロベリア"]},{a:"風",s:["エスタ","カッツェ"]},{a:"光",s:["ガイゼン"]},{a:"闇",s:["ニーア"]}];
+        sages.forEach((g, i) => {
+            let h = `<div class="m-card ${g.a}"><h3>${g.a}属性</h3>`;
+            g.s.forEach((s, si) => {
+                h += `<strong>${s}</strong><div class="item-list">`;
+                [5,5,10,20,20,30].forEach((c, ci) => h += `<label><input type="checkbox" class="m-cb" data-cost="${c}" id="q-${i}-${si}-${ci}" onchange="saveM()">礎:${ci}凸(${c})</label>`);
+                h += `<label><input type="checkbox" class="m-cb" data-cost="30" id="q-${i}-${si}-abi" onchange="saveM()">4アビ(30)</label></div>`;
+            });
+            h += `<strong>共通</strong><div class="item-list">`;
+            ["終末(神)","終末(マ)","破壊"].forEach(n => h += `<label><input type="checkbox" class="m-cb" data-cost="20" id="q-${i}-${n}" onchange="saveM()">${n}(20)</label>`);
+            container.innerHTML += h + `</div></div>`;
+        });
+    } else if (mCurrentTab === 'shoukaku') {
+        weaponMaster.forEach((m, i) => {
+            let h = `<div class="m-card ${m.a}"><h3>極星器:${m.wt}</h3><div class="item-list">`;
+            [{l:"3凸作成",c:45},{l:"4凸解放",c:45},{l:"5凸解放",c:80},{l:"覚醒強化",c:170}].forEach((s, si) => h += `<label><input type="checkbox" class="m-cb" data-cost="${s.c}" id="s-${i}-${si}" onchange="saveM()">${s.l}(${s.c})</label>`);
+            h += `</div><div style="margin-top:10px; font-size:12px">所持(無凸): <input type="number" id="ms-${i}" style="width:40px" oninput="saveM()"> 本<br>不足: <span id="msd-${i}" style="color:red; font-weight:bold">0</span>個</div></div>`;
+            container.innerHTML += h;
+        });
+    } else if (mCurrentTab === 'tense') {
+        weaponMaster.forEach((t, i) => {
+            let h = `<div class="m-card ${t.a}"><h3>${t.n}(${t.j})</h3><div class="item-list">`;
+            [{l:"超越120",c:50},{l:"極星4凸",c:20},{l:"極星5凸",c:20},{l:"光跡Lv4",c:20}].forEach((s, si) => h += `<label><input type="checkbox" class="m-cb" data-cost="${s.c}" id="t-${i}-${si}" onchange="saveM()">${s.l}(${s.c})</label>`);
+            h += `</div><div style="margin-top:10px; font-size:11px">天星器所持: <input type="number" id="mt-${i}" style="width:40px" oninput="saveM()"> 本<br>不足欠片: <span id="mtd-${i}" style="color:red; font-weight:bold">0</span> (要:<span id="mtw-${i}">0</span>本)</div></div>`;
+            container.innerHTML += h;
+        });
     }
+    loadM();
+}
 
-    function importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const json = JSON.parse(e.target.result);
-                if (confirm("現在のデータを上書きしてバックアップを復元しますか？")) {
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-                    location.reload();
-                }
-            } catch (err) {
-                alert("ファイルの形式が正しくありません。");
+function saveM() {
+    const s = JSON.parse(localStorage.getItem(M_STORAGE_KEY) || '{"checks":{},"stocks":{},"headStocks":{}}');
+    document.querySelectorAll('.m-cb').forEach(c => s.checks[c.id] = c.checked);
+    if(mCurrentTab==='shoukaku') weaponMaster.forEach((_,i)=> s.stocks[`s-${i}`] = parseInt(document.getElementById(`ms-${i}`).value)||0);
+    if(mCurrentTab==='tense') weaponMaster.forEach((_,i)=> s.stocks[`t-${i}`] = parseInt(document.getElementById(`mt-${i}`).value)||0);
+    if(mCurrentTab!=='tense') s.headStocks[mCurrentTab] = parseInt(document.getElementById('m-stock-input').value)||0;
+    localStorage.setItem(M_STORAGE_KEY, JSON.stringify(s));
+    calcM(s);
+}
+
+function calcM(data) {
+    let total = 0;
+    document.querySelectorAll('.m-cb').forEach(c => { if(!c.checked) total += parseInt(c.dataset.cost); });
+    let conv = 0;
+    if(mCurrentTab==='shoukaku') {
+        weaponMaster.forEach((_,i)=>{
+            const c = data.stocks[`s-${i}`]||0; conv += (c*15);
+            let n = 0; [0,1,2,3].forEach(si=>{ const cb=document.getElementById(`s-${i}-${si}`); if(cb && !cb.checked) n+=parseInt(cb.dataset.cost); });
+            const diffEl = document.getElementById(`msd-${i}`); if(diffEl) diffEl.textContent = Math.max(0, n-(c*15));
+        });
+        document.getElementById('m-weapon-val').textContent = conv;
+    }
+    if(mCurrentTab==='tense') {
+        let ts=0; weaponMaster.forEach((_,i)=>{
+            const c=data.stocks[`t-${i}`]||0; let n=0; [0,1,2,3].forEach(si=>{ const cb=document.getElementById(`t-${i}-${si}`); if(cb && !cb.checked) n+=parseInt(cb.dataset.cost); });
+            const cur=Math.floor(c/4)*5; const df=Math.max(0, n-cur); ts+=df;
+            const dEl = document.getElementById(`mtd-${i}`); if(dEl) dEl.textContent=df;
+            const wEl = document.getElementById(`mtw-${i}`); if(wEl) wEl.textContent=Math.max(0,(Math.ceil(df/5)*4)-(c%4));
+        });
+        document.getElementById('m-needed-total').textContent = ts;
+    } else {
+        const hs = data.headStocks[mCurrentTab]||0;
+        document.getElementById('m-needed-total').textContent = Math.max(0, total-(hs+conv));
+    }
+    document.getElementById('m-grand-total').textContent = total;
+}
+
+function loadM() {
+    const d = JSON.parse(localStorage.getItem(M_STORAGE_KEY) || '{"checks":{},"stocks":{},"headStocks":{}}');
+    document.querySelectorAll('.m-cb').forEach(c => { if(d.checks[c.id]!==undefined) c.checked=d.checks[c.id]; });
+    if(mCurrentTab==='shoukaku') weaponMaster.forEach((_,i)=> { const el = document.getElementById(`ms-${i}`); if(el) el.value = d.stocks[`s-${i}`]||0; });
+    if(mCurrentTab==='tense') weaponMaster.forEach((_,i)=> { const el = document.getElementById(`mt-${i}`); if(el) el.value = d.stocks[`t-${i}`]||0; });
+    if(mCurrentTab!=='tense') document.getElementById('m-stock-input').value = d.headStocks[mCurrentTab]||0;
+    calcM(d);
+}
+
+function exportMData() {
+    const d = localStorage.getItem(M_STORAGE_KEY);
+    if(!d){alert("保存されたデータがありません");return;}
+    const b=new Blob([d],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a');
+    a.href=u; a.download=`GBF_Manager_Backup.json`; a.click();
+}
+
+function importMData(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const json = JSON.parse(ev.target.result);
+            if(confirm("素材管理データを上書きして復元しますか？")) {
+                localStorage.setItem(M_STORAGE_KEY, JSON.stringify(json));
+                renderM();
             }
-        };
-        reader.readAsText(file);
-    }
+        } catch(err) { alert("無効なファイルです"); }
+    };
+    reader.readAsText(file);
+}
 
-    function render() {
-        const container = document.getElementById('main-container');
-        container.innerHTML = '';
-        
-        if (currentTab === 'quartz') {
-            const sages = [
-                {a: "火", s: ["アラナン","フラウ"]}, {a: "水", s: ["テレサ","ハーゼ"]}, {a: "土", s: ["カイム","ロベリア"]},
-                {a: "風", s: ["エスタ","カッツェ"]}, {a: "光", s: ["ガイゼン"]}, {a: "闇", s: ["ニーア"]}
-            ];
-            sages.forEach((group, i) => {
-                let html = `<div class="card attr-${group.a}"><h3>${group.a}属性</h3>`;
-                group.s.forEach((s, si) => {
-                    html += `<div class="group-title">${s}</div><div class="item-grid">`;
-                    [5,5,10,20,20,30].forEach((c, ci) => html += `<label><input type="checkbox" class="q-check" data-cost="${c}" id="q-${i}-${si}-${ci}" onchange="saveData()">礎:${ci}凸(${c})</label>`);
-                    html += `<label><input type="checkbox" class="q-check" data-cost="30" id="q-${i}-${si}-abi" onchange="saveData()">4アビ(30)</label></div>`;
-                });
-                html += `<div class="group-title">共通</div><div class="item-grid">`;
-                ["終末(神)","終末(マ)","破壊"].forEach(n => html += `<label><input type="checkbox" class="q-check" data-cost="20" id="q-${i}-${n}" onchange="saveData()">${n}(20)</label>`);
-                html += `</div></div>`;
-                container.innerHTML += html;
+/* ==========================================
+   Tool 2: 十天衆限界超越
+   ========================================== */
+const T_STORAGE_KEY = 'GBF_TEN_TRANS_APP_DATA';
+const characters = [{n:"ウーノ", a:"水", anima:"黒麒麟"}, {n:"ソーン", a:"光", anima:"黄龍"}, {n:"サラーサ", a:"土", anima:"黄龍"}, {n:"カトル", a:"水", anima:"黒麒麟"}, {n:"フュンフ", a:"光", anima:"黄龍"}, {n:"シス", a:"闇", anima:"黒麒麟"}, {n:"シエテ", a:"風", anima:"黒麒麟"}, {n:"オクトー", a:"土", anima:"黄龍"}, {n:"ニオ", a:"風", anima:"黄龍"}, {n:"エッセル", a:"火", anima:"黒麒麟"}];
+const commonMats = ["ルピ", "ヒヒイロカネ", "碧麗の証", "ダマスカス骸晶", "星晶の欠片", "究竟の証", "JP", "栄光の証", "覇者の証", "宝晶石", "黄龍のアニマ", "黒麒麟のアニマ", "終末の暗晶", "漆黒の棘翅", "狡知の魔角", "バハ角", "真龍の金鱗"];
+const attrMats = ["真なるアニマ", "銀片", "六竜素材", "光輪", "マグナIIアニマ", "プシュケー", "武器エレ", "属性エレ", "竜珠", "ブライト", "下位宝珠", "ジーン", "朽ち武器(無凸)", "天星器(無凸)"];
+const masterData = {
+    110: { common:{"ルピ":100000, "ダマスカス骸晶":20, "ヒヒイロカネ":1, "星晶の欠片":7500}, attr:{"六竜素材":50, "光輪":80, "銀片":200, "下位宝珠":7500, "ジーン":7500, "朽ち武器(無凸)":120} },
+    120: { common:{"ルピ":5000000, "究竟の証":100, "JP":20000, "栄光の証":1500, "覇者の証":300, "宝晶石":1000, "バハ角":100}, attr:{"真なるアニマ":30, "マグナIIアニマ":50, "プシュケー":300, "下位宝珠":2500, "ジーン":2500, "朽ち武器(無凸)":40, "天星器(無凸)":40} },
+    130: { common:{"碧麗の証":1} },
+    140: { common:{"ルピ":5000000, "真龍の金鱗":50}, attr:{"ブライト":30, "武器エレ":2000, "属性エレ":2000, "竜珠":300} },
+    150: { common:{"終末の暗晶":30, "漆黒の棘翅":30, "狡知の魔角":30, "碧麗の証":1} }
+};
+
+let tData = { chars: {}, stocks: {} };
+let tActiveTab = 'Common';
+
+function initT() {
+    const saved = localStorage.getItem(T_STORAGE_KEY);
+    if(saved) { try { tData = JSON.parse(saved); } catch(e) {} }
+    renderTSettings();
+}
+
+function renderTSettings() {
+    const container = document.getElementById('t-char-settings');
+    container.innerHTML = '';
+    characters.forEach(c => {
+        if(!tData.chars[c.n]) tData.chars[c.n] = {cur:100, tar:100, fin:false};
+        const d = tData.chars[c.n];
+        const attrClass = {火:'fire',水:'water',土:'earth',風:'wind',光:'light',闇:'dark'}[c.a];
+        container.innerHTML += `
+            <div class="char-item ${d.fin ? 'finished' : ''}" style="border-top-color:var(--${attrClass})">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px">
+                    <strong style="font-size:13px">${c.n}</strong>
+                    <input type="checkbox" onchange="toggleTFin('${c.n}',this.checked)" ${d.fin?'checked':''}>
+                </div>
+                <div style="display:flex; align-items:center; gap:2px;">
+                    <select style="flex:1" onchange="updateTChar('${c.n}','cur',this.value)" ${d.fin?'disabled':''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.cur==v?'selected':''}>${v}</option>`)}</select>
+                    <span>▶</span>
+                    <select style="flex:1" onchange="updateTChar('${c.n}','tar',this.value)" ${d.fin?'disabled':''}>${[100,110,120,130,140,150].map(v=>`<option value="${v}" ${d.tar==v?'selected':''}>${v}</option>`)}</select>
+                </div>
+            </div>`;
+    });
+    switchTInputTab(tActiveTab);
+    calcT();
+}
+
+function updateTChar(n, k, v) { tData.chars[n][k] = parseInt(v); calcT(); }
+function toggleTFin(n, c) { tData.chars[n].fin = c; renderTSettings(); }
+function switchTInputTab(t) {
+    tActiveTab = t;
+    document.querySelectorAll('.t-tab-btn').forEach(b => b.classList.toggle('active', b.innerText === t));
+    const container = document.getElementById('t-stock-inputs'); container.innerHTML = '';
+    const list = (t === 'Common') ? commonMats : attrMats;
+    list.forEach(m => {
+        const id = t === 'Common' ? m : `${t}-${m}`;
+        const val = tData.stocks[id] || 0;
+        container.innerHTML += `<div><label style="display:block;font-size:10px;margin-bottom:2px;">${m}</label><input type="number" value="${val}" oninput="updateTStock('${id}',this.value)"></div>`;
+    });
+}
+function updateTStock(id, v) { tData.stocks[id] = parseInt(v)||0; calcT(); }
+
+function calcT() {
+    const needed = {};
+    characters.forEach(c => {
+        const d = tData.chars[c.n]; if(d.fin || d.tar <= d.cur) return;
+        for(let lv in masterData) {
+            const num = parseInt(lv);
+            if(num > d.cur && num <= d.tar) {
+                for(let m in masterData[lv].common) needed[m] = (needed[m]||0) + masterData[lv].common[m];
+                for(let m in masterData[lv].attr) { const key=`${c.a}-${m}`; needed[key] = (needed[key]||0) + masterData[lv].attr[m]; }
+                if(num === 140) { const ak=`${c.anima}のアニマ`; needed[ak] = (needed[ak]||0)+30; }
+            }
+        }
+    });
+    const container = document.getElementById('t-result-container'); container.innerHTML = '';
+    ["共通", "火", "水", "土", "風", "光", "闇"].forEach(cat => {
+        const items = Object.keys(needed).filter(k => cat === "共通" ? (commonMats.includes(k) || (k.includes("アニマ") && !k.includes("-"))) : k.startsWith(cat + "-"));
+        if(items.length > 0) {
+            let h = `<div style="background:#eee; padding:5px; margin:10px 0 5px; font-weight:bold; border-radius:4px;">${cat}</div><table>`;
+            items.sort().forEach(k => {
+                const s = tData.stocks[k]||0; const df = needed[k]-s;
+                h += `<tr class="${df<=0?'':'status-ng'}"><td>${df<=0?'<span style="color:#2ecc71">✓</span> ':''}${k.includes("-")?k.split("-")[1]:k}</td><td style="text-align:right">${needed[k].toLocaleString()}</td><td style="text-align:right">${df<=0?'-':df.toLocaleString()}</td></tr>`;
             });
-        } 
-        else if (currentTab === 'shoukaku') {
-            weaponMaster.forEach((m, i) => {
-                let html = `<div class="card attr-${m.a}"><h3>極星器：${m.wt}</h3><div class="item-grid">`;
-                const steps = [{l:"3凸作成(掘り)", c:45}, {l:"4凸解放", c:45}, {l:"5凸解放", c:80}, {l:"覚醒強化", c:170}];
-                steps.forEach((s, si) => html += `<label><input type="checkbox" class="q-check" data-cost="${s.c}" id="s-${i}-${si}" onchange="saveData()">${s.l}(${s.c})</label>`);
-                html += `</div><div class="card-calc"><div><span class="stock-label">所持本数(無凸)</span><input type="number" id="sstock-${i}" class="card-stock-input" value="0" oninput="saveData()"> 本</div><div class="card-result">不足:<span id="sdiff-${i}" class="txt-red">0</span>個</div></div></div>`;
-                container.innerHTML += html;
-            });
+            container.innerHTML += h + `</table>`;
         }
-        else if (currentTab === 'tense') {
-            weaponMaster.forEach((t, i) => {
-                let html = `<div class="card attr-${t.a}"><h3>${t.n} (${t.j})</h3><div class="item-grid">`;
-                const steps = [{l:"超越Lv120解放", c:50}, {l:"極星器 4凸", c:20}, {l:"極星器 5凸", c:20}, {l:"光跡武器 Lv4強化", c:20}];
-                steps.forEach((s, si) => html += `<label><input type="checkbox" class="q-check" data-cost="${s.c}" id="t-${i}-${si}" onchange="saveData()">${s.l}(${s.c})</label>`);
-                html += `</div><div class="card-calc"><div><span class="stock-label">天星器所持(無凸)</span><input type="number" id="tstock-${i}" class="card-stock-input" value="0" oninput="saveData()"> 本</div><div class="card-result">不足欠片:<span id="tdiff-${i}" class="txt-red">0</span><br><small>要追加:</small><span id="tweap-${i}">0</span>本</div></div></div>`;
-                container.innerHTML += html;
-            });
-        }
-        loadData();
-    }
+    });
+}
 
-    function switchTab(tab) {
-        currentTab = tab;
-        document.body.className = 'tab-' + tab;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + tab).classList.add('active');
-        const hLabel = document.getElementById('header-total-label');
-        const sLabel = document.getElementById('header-stock-label');
-        const nLabel = document.getElementById('header-needed-label');
-        
-        if(tab === 'shoukaku') { 
-            hLabel.textContent = '目標晶核'; 
-            sLabel.textContent = '所持晶核'; 
-            nLabel.textContent = '不足分';
-        }
-        else if(tab === 'tense') { 
-            hLabel.textContent = '必要欠片(合計)'; 
-            nLabel.textContent = '実質不足分';
-        }
-        else { 
-            hLabel.textContent = '目標個数'; 
-            sLabel.textContent = '所持数'; 
-            nLabel.textContent = '不足分';
-        }
-        render();
-    }
+function saveT() { localStorage.setItem(T_STORAGE_KEY, JSON.stringify(tData)); alert("ブラウザに保存しました"); }
+function downloadT() { const b=new Blob([JSON.stringify(tData,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download="gbf_trans_data.json"; a.click(); }
+function uploadTFile(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            tData = JSON.parse(ev.target.result);
+            renderTSettings();
+            alert("設定を読み込みました");
+        } catch(err) { alert("無効なファイルです"); }
+    };
+    reader.readAsText(file);
+}
 
-    function saveData() {
-        const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
-        const data = { checks: {...stored.checks}, stocks: {...stored.stocks}, headStocks: {...stored.headStocks} };
-
-        document.querySelectorAll('.q-check').forEach(cb => { data.checks[cb.id] = cb.checked; });
-        if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { data.stocks[`s-${i}`] = parseInt(document.getElementById(`sstock-${i}`).value) || 0; });
-        if(currentTab === 'tense') weaponMaster.forEach((m, i) => { data.stocks[`t-${i}`] = parseInt(document.getElementById(`tstock-${i}`).value) || 0; });
-        
-        // 天星タブ以外の場合のみ、ヘッダーの所持数を保存
-        if (currentTab !== 'tense') {
-            data.headStocks[currentTab] = parseInt(document.getElementById('stock').value) || 0;
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        calculate(data);
-    }
-
-    function calculate(data) {
-        let grandTotal = 0;
-        document.querySelectorAll('.q-check').forEach(cb => { if(!cb.checked) grandTotal += parseInt(cb.dataset.cost); });
-        let weaponConvTotal = 0;
-
-        if (currentTab === 'shoukaku') {
-            weaponMaster.forEach((m, i) => {
-                const count = data.stocks[`s-${i}`] || 0;
-                weaponConvTotal += (count * 15);
-                let cardNeed = 0;
-                [0,1,2,3].forEach(si => { const cb = document.getElementById(`s-${i}-${si}`); if(cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost); });
-                document.getElementById(`sdiff-${i}`).textContent = Math.max(0, cardNeed - (count * 15));
-            });
-            document.getElementById('weapon-conv-val').textContent = weaponConvTotal;
-        }
-        if (currentTab === 'tense') {
-            let totalShortage = 0;
-            weaponMaster.forEach((t, i) => {
-                const count = data.stocks[`t-${i}`] || 0;
-                let need = 0;
-                [0,1,2,3].forEach(si => { const cb = document.getElementById(`t-${i}-${si}`); if(cb && !cb.checked) need += parseInt(cb.dataset.cost); });
-                const currentKakeStock = Math.floor(count / 4) * 5;
-                const diffKake = Math.max(0, need - currentKakeStock);
-                totalShortage += diffKake;
-                document.getElementById(`tdiff-${i}`).textContent = diffKake;
-                document.getElementById(`tweap-${i}`).textContent = Math.max(0, (Math.ceil(diffKake / 5) * 4) - (count % 4));
-            });
-            // 天星タブのヘッダー「実質不足分」を表示
-            document.getElementById('needed-total').textContent = totalShortage;
-        } else {
-            const headStock = data.headStocks[currentTab] || 0;
-            document.getElementById('needed-total').textContent = Math.max(0, grandTotal - (headStock + weaponConvTotal));
-        }
-        document.getElementById('grand-total').textContent = grandTotal;
-    }
-
-    function loadData() {
-        const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"checks":{}, "stocks":{}, "headStocks":{}}');
-        document.querySelectorAll('.q-check').forEach(cb => { if(data.checks[cb.id] !== undefined) cb.checked = data.checks[cb.id]; });
-        if(currentTab === 'shoukaku') weaponMaster.forEach((m, i) => { const el = document.getElementById(`sstock-${i}`); if(el) el.value = data.stocks[`s-${i}`] || 0; });
-        if(currentTab === 'tense') weaponMaster.forEach((m, i) => { const el = document.getElementById(`tstock-${i}`); if(el) el.value = data.stocks[`t-${i}`] || 0; });
-        
-        const stockEl = document.getElementById('stock');
-        if (currentTab !== 'tense') {
-            stockEl.value = data.headStocks[currentTab] || 0;
-        }
-        calculate(data);
-    }
-    render();
+// 起動処理
+window.onload = () => {
+    switchMSubTab('quartz');
+    initT();
+};
 </script>
 </body>
 </html>
