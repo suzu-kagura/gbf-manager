@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クォーツ計算機 - 進捗保存版</title>
+    <style>
+        :root {
+            --fire: #ffeded; --water: #e3f2fd; --earth: #fdf5e6;
+            --wind: #e8f5e9; --light: #fffde7; --dark: #f3e5f5;
+            --needed: #e74c3c;
+        }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        
+        /* 画像のデザインを再現したヘッダー */
+        .header { position: sticky; top: 0; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 20px; }
+        .calc-box { text-align: center; min-width: 150px; }
+        .calc-box label { font-size: 0.85em; color: #666; display: block; margin-bottom: 8px; }
+        .val { font-size: 2.2em; font-weight: bold; }
+        .needed-val { color: var(--needed); }
+        .stock-input { font-size: 1.8em; width: 100px; text-align: center; border: 2px solid #ddd; border-radius: 10px; font-weight: bold; padding: 5px; }
+        
+        /* カードレイアウト */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 25px; }
+        .card { background: white; border-radius: 15px; padding: 20px; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .card h3 { margin-top: 0; font-size: 1.4em; border-bottom: none; }
+        
+        .attr-fire { border-top: 12px solid #f44336; background: var(--fire); }
+        .attr-water { border-top: 12px solid #2196f3; background: var(--water); }
+        .attr-earth { border-top: 12px solid #795548; background: var(--earth); }
+        .attr-wind { border-top: 12px solid #4caf50; background: var(--wind); }
+        .attr-light { border-top: 12px solid #fbc02d; background: var(--light); }
+        .attr-dark { border-top: 12px solid #9c27b0; background: var(--dark); }
+
+        .group-title { font-size: 0.95em; font-weight: bold; margin: 18px 0 8px; background: rgba(255,255,255,0.8); padding: 5px 12px; border-radius: 6px; border-left: 4px solid #444; }
+        .item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        label { display: flex; align-items: center; background: rgba(255,255,255,0.9); padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85em; transition: 0.2s; border: 1px solid transparent; }
+        label:hover { background: #fff; border-color: #ccc; }
+        label:has(input:checked) { background: rgba(0,0,0,0.05); color: #999; text-decoration: line-through; }
+        input[type="checkbox"] { margin-right: 10px; transform: scale(1.3); }
+        
+        .subtotal { text-align: right; margin-top: 15px; font-weight: bold; font-size: 1.1em; border-top: 1px dashed #bbb; padding-top: 12px; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="calc-box"><label>未完了合計</label><div class="val" id="grand-total">0</div></div>
+    <div class="calc-box"><label>所持数</label><input type="number" id="stock" class="stock-input" value="0" oninput="saveAndCalc()"></div>
+    <div class="calc-box"><label>不足分</label><div class="val needed-val" id="needed-total">0</div></div>
+    <div class="calc-box"><label>古戦場換算</label><div class="val" id="gw-count">0</div></div>
+</div>
+
+<div class="grid" id="app-grid"></div>
+
+<script>
+    const isshizueSteps = [
+        { id: "s0", label: "交換", cost: 5 },
+        { id: "s1", label: "1凸", cost: 5 },
+        { id: "s2", label: "2凸", cost: 10 },
+        { id: "s3", label: "3凸", cost: 20 },
+        { id: "s4", label: "4凸", cost: 20 },
+        { id: "s5", label: "5凸", cost: 30 }
+    ];
+
+    const weaponReqs = [
+        { id: "w_shinto", label: "終末(神)超越220", cost: 20 },
+        { id: "w_magna", label: "終末(マ)超越220", cost: 20 },
+        { id: "w_world", label: "破壊武器 5凸", cost: 20 }
+    ];
+
+    const data = [
+        { attr: "火", class: "attr-fire", sages: ["アラナン", "フラウ"] },
+        { attr: "水", class: "attr-water", sages: ["マリア・テレサ", "ハーゼリーラ"] },
+        { attr: "土", class: "attr-earth", sages: ["カイム", "ロベリア"] },
+        { attr: "風", class: "attr-wind", sages: ["エスタリオラ", "カッツェリーラ"] },
+        { attr: "光", class: "attr-light", sages: ["ガイゼンボーガ"] },
+        { attr: "闇", class: "attr-dark", sages: ["ニーア"] }
+    ];
+
+    const grid = document.getElementById('app-grid');
+
+    data.forEach((group, gIdx) => {
+        let html = `<div class="card ${group.class}"><h3>${group.attr}属性</h3>`;
+        group.sages.forEach((sage, sIdx) => {
+            html += `<div class="group-title">賢者：${sage}</div><div class="item-grid">`;
+            isshizueSteps.forEach(step => {
+                const id = `c-${gIdx}-${sIdx}-${step.id}`;
+                html += `<label><input type="checkbox" class="q-check" id="${id}" data-cost="${step.cost}" onchange="saveAndCalc()">礎:${step.label}(${step.cost})</label>`;
+            });
+            const abiId = `c-${gIdx}-${sIdx}-abi`;
+            html += `<label><input type="checkbox" class="q-check" id="${abiId}" data-cost="30" onchange="saveAndCalc()">第4アビ(30)</label>`;
+            html += `</div>`;
+        });
+        html += `<div class="group-title">属性共通武器</div><div class="item-grid">`;
+        weaponReqs.forEach((item, wIdx) => {
+            const wid = `c-${gIdx}-w-${item.id}`;
+            html += `<label><input type="checkbox" class="q-check" id="${wid}" data-cost="${item.cost}" onchange="saveAndCalc()">${item.label}(${item.cost})</label>`;
+        });
+        html += `</div><div class="subtotal">属性未完了: <span class="attr-subtotal">0</span></div></div>`;
+        grid.innerHTML += html;
+    });
+
+    function saveAndCalc() {
+        let total = 0;
+        const stock = parseInt(document.getElementById('stock').value) || 0;
+        const checks = {};
+
+        document.querySelectorAll('.card').forEach(card => {
+            let subtotal = 0;
+            card.querySelectorAll('.q-check').forEach(cb => {
+                checks[cb.id] = cb.checked;
+                if (!cb.checked) subtotal += parseInt(cb.dataset.cost);
+            });
+            card.querySelector('.attr-subtotal').textContent = subtotal;
+            total += subtotal;
+        });
+
+        localStorage.setItem('gbf_q_checks', JSON.stringify(checks));
+        localStorage.setItem('gbf_q_stock', stock);
+
+        const needed = Math.max(0, total - stock);
+        document.getElementById('grand-total').textContent = total;
+        document.getElementById('needed-total').textContent = needed;
+        document.getElementById('gw-count').textContent = Math.ceil(needed / 45) + " 回分";
+    }
+
+    function load() {
+        const savedChecks = JSON.parse(localStorage.getItem('gbf_q_checks') || '{}');
+        const savedStock = localStorage.getItem('gbf_q_stock') || 0;
+        document.getElementById('stock').value = savedStock;
+        Object.keys(savedChecks).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.checked = savedChecks[id];
+        });
+        saveAndCalc();
+    }
+    load();
+</script>
+</body>
+</html>
