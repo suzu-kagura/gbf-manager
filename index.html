@@ -14,12 +14,18 @@
             --dark: #f3e5f5; --dark-line: #9c27b0;
             --accent: #2c3e50; --needed: #e74c3c;
         }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; }
-        .tab-menu { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        body { font-family: sans-serif; background: #f0f2f5; margin: 0; padding: 10px; color: #333; padding-top: 60px; }
+        
+        .tab-menu { 
+            position: fixed; top: 0; left: 0; right: 0; 
+            display: flex; justify-content: center; gap: 8px; 
+            padding: 10px; background: #f0f2f5; z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
         .tab-btn { padding: 8px 16px; border: none; border-radius: 20px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85em; transition: 0.3s; }
         .tab-btn.active { background: var(--accent); color: white; }
         
-        .header { position: sticky; top: 5px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 10px; }
+        .header { position: sticky; top: 55px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; z-index: 100; display: flex; flex-wrap: wrap; justify-content: space-around; align-items: center; gap: 10px; }
         .calc-box { text-align: center; min-width: 90px; }
         .calc-box label { font-size: 0.75em; color: #666; display: block; margin-bottom: 4px; }
         .val { font-size: 1.5em; font-weight: bold; }
@@ -32,7 +38,6 @@
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #ddd; overflow: hidden; position: relative; }
         .card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; }
         
-        /* 属性別カラースタイル */
         .attr-火 { background-color: var(--fire); } .attr-火::before { background-color: var(--fire-line); }
         .attr-水 { background-color: var(--water); } .attr-水::before { background-color: var(--water-line); }
         .attr-土 { background-color: var(--earth); } .attr-土::before { background-color: var(--earth-line); }
@@ -47,10 +52,11 @@
         input[type="checkbox"] { margin-right: 8px; transform: scale(1.2); }
         
         .card-calc { margin-top: 15px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.1); display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em; }
-        .card-stock-input { width: 50px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; }
+        .card-stock-input { width: 55px; text-align: center; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; background: #fff; }
         .card-result { font-weight: bold; border-left: 1px solid rgba(0,0,0,0.1); padding-left: 10px; }
         .weapon-needed { margin-top: 5px; color: #2980b9; font-weight: bold; font-size: 0.9em; line-height: 1.4; }
         .txt-red { color: var(--needed); }
+        .stock-label { font-size: 0.75em; color: #666; display: block; margin-top: 2px; }
     </style>
 </head>
 <body class="tab-quartz">
@@ -72,9 +78,6 @@
 
 <script>
     let currentTab = 'quartz';
-    const attrMap = ["火", "水", "土", "風", "光", "闇"];
-    
-    // 十天衆・天星器・属性の対応マスタ
     const weaponMaster = [
         {id: 1, n: "一の欠片", j: "ウーノ", w: "一乃矛", a: "水", wt: "槍"},
         {id: 2, n: "二の欠片", j: "ソーン", w: "二乃弓", a: "光", wt: "弓"},
@@ -94,7 +97,7 @@
         
         if (currentTab === 'quartz') {
             const sages = [["アラナン","フラウ"],["テレサ","ハーゼ"],["カイム","ロベリア"],["エスタ","カッツェ"],["ガイゼン"],["ニーア"]];
-            attrMap.forEach((a, i) => {
+            ["火", "水", "土", "風", "光", "闇"].forEach((a, i) => {
                 let html = `<div class="card attr-${a}"><h3>${a}属性</h3>`;
                 sages[i].forEach((s, si) => {
                     html += `<div class="group-title">${s}</div><div class="item-grid">`;
@@ -121,17 +124,19 @@
                 let html = `<div class="card attr-${t.a}"><h3>${t.n} (${t.j})</h3>`;
                 html += `<div class="item-grid">`;
                 html += `<label><input type="checkbox" class="q-check" data-cost="50" id="t-${t.id}-c" onchange="saveData()">超越Lv120解放 (50)</label>`;
-                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-k" onchange="saveData()">極星器 4凸 (20)</label>`;
-                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-l" onchange="saveData()">光跡武器 Lv4強化 (20)</label>`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-k4" onchange="saveData()">極星器 4凸 (20)</label>`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-k5" onchange="saveData()">極星器 5凸 (20)</label>`;
+                html += `<label><input type="checkbox" class="q-check" data-cost="20" id="t-${t.id}-l" onchange="saveData()">極星の光跡 Lv4強化 (20)</label>`;
                 html += `</div>`;
                 html += `<div class="card-calc">
                             <div>
-                                <div>必要:<span id="need-${t.id}">0</span></div>
-                                <div>所持:<input type="number" id="stock-${t.id}" class="card-stock-input" value="0" oninput="saveData()"></div>
+                                <span class="stock-label">所持本数(無凸)</span>
+                                <input type="number" id="stock-${t.id}" class="card-stock-input" value="0" oninput="saveData()"> 本
+                                <div style="margin-top:8px">必要欠片:<span id="need-${t.id}">0</span></div>
                             </div>
                             <div class="card-result">
-                                <div>不足:<span id="diff-${t.id}" class="txt-red">0</span></div>
-                                <div class="weapon-needed">要:${t.w}<br><span id="weap-${t.id}">0</span>本（無凸換算）</div>
+                                <div>不足欠片:<span id="diff-${t.id}" class="txt-red">0</span></div>
+                                <div class="weapon-needed">あと:${t.w}<br><span id="weap-${t.id}">0</span>本（追加分）</div>
                             </div>
                          </div></div>`;
                 container.innerHTML += html;
@@ -145,17 +150,16 @@
         document.body.className = 'tab-' + tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + tab).classList.add('active');
-        
         const unitLabel = document.getElementById('unit-label');
         const headerTotalLabel = document.getElementById('header-total-label');
-        
         if(tab === 'tense') {
-            unitLabel.textContent = '必要個数(全体)';
+            unitLabel.textContent = '必要欠片(全体)';
             headerTotalLabel.textContent = '全体必要数';
         } else {
             unitLabel.textContent = tab === 'quartz' ? '古戦場換算' : '必要個数';
             headerTotalLabel.textContent = '未完了合計';
         }
+        window.scrollTo(0, 0);
         render();
     }
 
@@ -175,24 +179,37 @@
             }
         });
 
-        if (currentTab === 'tense') {
-            weaponMaster.forEach(t => {
-                let cardNeed = 0;
-                [t.id + '-c', t.id + '-k', t.id + '-l'].forEach(suffix => {
-                    const cb = document.getElementById('t-' + suffix);
-                    if (cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost);
-                });
-                const sInput = document.getElementById('stock-' + t.id);
-                const sVal = sInput ? (parseInt(sInput.value) || 0) : 0;
-                cardStocks[t.id] = sVal;
-                const diff = Math.max(0, cardNeed - sVal);
-                if(document.getElementById(`need-${t.id}`)) {
-                    document.getElementById(`need-${t.id}`).textContent = cardNeed;
-                    document.getElementById(`diff-${t.id}`).textContent = diff;
-                    document.getElementById(`weap-${t.id}`).textContent = Math.ceil(diff / 5) * 4;
-                }
-            });
-        }
+		// saveData関数内の天星の欠片計算ロジックのみ抜粋・修正
+		if (currentTab === 'tense') {
+		    weaponMaster.forEach(t => {
+		        let cardNeed = 0;
+		        [t.id + '-c', t.id + '-k4', t.id + '-k5', t.id + '-l'].forEach(suffix => {
+		            const cb = document.getElementById('t-' + suffix);
+		            if (cb && !cb.checked) cardNeed += parseInt(cb.dataset.cost);
+		        });
+		        
+		        const sInput = document.getElementById(`stock-${t.id}`);
+		        const weaponStock = sInput ? (parseInt(sInput.value) || 0) : 0;
+		        cardStocks[t.id] = weaponStock;
+		        
+		        // 1. 4枚セットから欠片数を算出（9本なら2セットで10個）
+		        const validTenseCrystals = Math.floor(weaponStock / 4) * 5;
+		        
+		        // 2. 目標から有効な欠片を引いて「不足欠片数」を出す（50 - 10 = 40個）
+		        const diffCrystals = Math.max(0, cardNeed - validTenseCrystals);
+		        
+		        // 3. 不足欠片に必要な「本来の本数」から「倉庫の余り」を引く
+		        // (40 / 5 * 4) = 32本。ここから余りの1本を引いて 31本
+		        const extraWeapons = weaponStock % 4;
+		        const totalNeededWeapons = Math.max(0, (Math.ceil(diffCrystals / 5) * 4) - extraWeapons);
+		        
+		        if(document.getElementById(`need-${t.id}`)) {
+		            document.getElementById(`need-${t.id}`).textContent = cardNeed;
+		            document.getElementById(`diff-${t.id}`).textContent = diffCrystals;
+		            document.getElementById(`weap-${t.id}`).textContent = totalNeededWeapons;
+		        }
+		    });
+		}
 
         localStorage.setItem('gbf_all_checks', JSON.stringify(checks));
         localStorage.setItem('gbf_card_stocks', JSON.stringify(cardStocks));
