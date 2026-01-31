@@ -53,6 +53,7 @@
         .t-tab-btn.active { background: var(--gbf-blue); color: white; }
         .t-input-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 8px; margin-top: 10px; }
         .t-input-grid input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 12px; }
+        .group-label { grid-column: 1/-1; border-top: 2px solid var(--gbf-blue); margin-top: 10px; padding-top: 5px; font-weight: bold; font-size: 12px; color: var(--gbf-blue); }
         table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
         th, td { border-bottom: 1px solid #eee; padding: 8px 4px; text-align: left; }
         .status-ng { color: var(--danger); font-weight: bold; }
@@ -141,7 +142,6 @@ const charMaster = [
 const materialOrder = ["剣", "短剣", "槍", "斧", "杖", "銃", "拳", "弓", "琴", "刀"];
 const sortedWeaponMaster = [...charMaster].sort((a, b) => materialOrder.indexOf(a.wt) - materialOrder.indexOf(b.wt));
 
-// ストレージキーをバックアップファイルに合わせる
 const M_STORAGE_KEY = 'gbf_manager_data_unified';
 const T_STORAGE_KEY = 'GBF_TEN_TRANS_APP_DATA_V10';
 
@@ -276,12 +276,12 @@ function importMData(e) {
 
 /* --- Trans Logic --- */
 const commonOrder = ["碧麗の証", "究竟の証", "栄光の証", "覇者の証", "ルピ", "ヒヒイロカネ", "ダマスカス骸晶", "星晶の欠片", "JP", "宝晶石", "黄龍のマグナアニマ", "黒麒麟のマグナアニマ", "終末の暗晶", "漆黒の棘翅", "狡知の魔角", "バハ紫電角", "真龍の金鱗"];
-const attrMats = ["真なるアニマ", "六竜素材", "光輪", "マグナIIマグナアニマ", "プシュケー", "属性エレメント", "竜珠", "ブライト", "下位宝珠", "ジーン", "朽ち武器(無凸)", "天星器(無凸)"];
+const attrMats = ["真なるアニマ", "六竜素材", "光輪", "マグナIIマグナアニマ", "プシュケー", "属性エレメント", "竜珠", "ブライト", "下位宝珠", "ジーン"];
 let tData = { chars: {}, stocks: {} };
 let tActiveTab = 'Common';
 const masterDataT = {
-    110: { common:{"ルピ":100000, "ダマスカス骸晶":20, "ヒヒイロカネ":1, "星晶の欠片":7500}, attr:{"六竜素材":50, "光輪":80, "下位宝珠":7500, "ジーン":7500, "朽ち武器(無凸)":120}, spec:{"銀片":200} },
-    120: { common:{"ルピ":5000000, "究竟の証":100, "JP":20000, "栄光の証":1500, "覇者の証":300, "宝晶石":1000, "バハ紫電角":100}, attr:{"真なるアニマ":30, "マグナIIマグナアニマ":50, "プシュケー":300, "下位宝珠":2500, "ジーン":2500, "朽ち武器(無凸)":40, "天星器(無凸)":40} },
+    110: { common:{"ルピ":100000, "ダマスカス骸晶":20, "ヒヒイロカネ":1, "星晶の欠片":7500}, attr:{"六竜素材":50, "光輪":80, "下位宝珠":7500, "ジーン":7500}, spec:{"銀片":200, "朽ち武器":120} },
+    120: { common:{"ルピ":5000000, "究竟の証":100, "JP":20000, "栄光の証":1500, "覇者の証":300, "宝晶石":1000, "バハ紫電角":100}, attr:{"真なるアニマ":30, "マグナIIマグナアニマ":50, "プシュケー":300, "下位宝珠":2500, "ジーン":2500}, spec:{"朽ち武器":40, "天星器":40} },
     130: { common:{"碧麗の証":1} },
     140: { common:{"ルピ":5000000, "真龍の金鱗":50}, attr:{"ブライト":30, "属性エレメント":2000, "竜珠":300}, spec:{"武器エレ":2000} },
     150: { common:{"終末の暗晶":30, "漆黒の棘翅":30, "狡知の魔角":30, "碧麗の証":1} }
@@ -314,13 +314,25 @@ function switchTInputTab(t) {
     tActiveTab = t;
     document.querySelectorAll('.t-tab-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(t)));
     const container = document.getElementById('t-stock-inputs'); container.innerHTML = '';
+    
     if(t === 'Common') {
         commonOrder.forEach(m => renderTInputItem(container, m, m));
-        container.innerHTML += `<div style="grid-column:1/-1; border-top:2px solid var(--gbf-blue); margin-top:10px; padding-top:5px; font-weight:bold; font-size:12px; color:var(--gbf-blue);">【銀片】</div>`;
+        
+        container.innerHTML += `<div class="group-label">【銀片】</div>`;
         sortedWeaponMaster.forEach(w => renderTInputItem(container, `${w.wt}の銀片`, `spec-銀片-${w.j}`));
-        container.innerHTML += `<div style="grid-column:1/-1; border-top:2px solid var(--gbf-blue); margin-top:10px; padding-top:5px; font-weight:bold; font-size:12px; color:var(--gbf-blue);">【武器エレメント】</div>`;
+        
+        container.innerHTML += `<div class="group-label">【武器エレメント】</div>`;
         sortedWeaponMaster.forEach(w => renderTInputItem(container, `${w.wt}エレメント`, `spec-武器エレ-${w.j}`));
-    } else { attrMats.forEach(m => renderTInputItem(container, m, `${t}-${m}`)); }
+
+        container.innerHTML += `<div class="group-label">【天星器 (無凸本数)】</div>`;
+        sortedWeaponMaster.forEach(w => renderTInputItem(container, `${w.wt} (${w.n})`, `spec-天星器-${w.j}`));
+
+        container.innerHTML += `<div class="group-label">【朽ち武器 (無凸本数)】</div>`;
+        sortedWeaponMaster.forEach(w => renderTInputItem(container, `${w.wt}の朽ち武器`, `spec-朽ち武器-${w.j}`));
+
+    } else { 
+        attrMats.forEach(m => renderTInputItem(container, m, `${t}-${m}`)); 
+    }
 }
 
 function renderTInputItem(container, label, id) {
@@ -345,18 +357,26 @@ function calcT() {
                 if(masterDataT[lv].spec) {
                     if(masterDataT[lv].spec["銀片"]) { let k=`spec-銀片-${c.j}`; needed[k] = (needed[k]||0) + 200; }
                     if(masterDataT[lv].spec["武器エレ"]) { let k=`spec-武器エレ-${c.j}`; needed[k] = (needed[k]||0) + 2000; }
+                    if(masterDataT[lv].spec["天星器"]) { let k=`spec-天星器-${c.j}`; needed[k] = (needed[k]||0) + 40; }
+                    if(masterDataT[lv].spec["朽ち武器"]) { 
+                        let k=`spec-朽ち武器-${c.j}`;
+                        let amt = masterDataT[lv].spec["朽ち武器"];
+                        needed[k] = (needed[k]||0) + amt; 
+                    }
                 }
                 if(num === 140) { const ak = (c.a==="火"||c.a==="闇"||c.a==="水"||c.a==="風") ? "黒麒麟のマグナアニマ" : "黄龍のマグナアニマ"; needed[ak] = (needed[ak]||0)+30; }
             }
         }
     });
     const resContainer = document.getElementById('t-result-container'); resContainer.innerHTML = '';
-    const categories = ["共通", "銀片", "武器エレメント", "火", "水", "土", "風", "光", "闇"];
+    const categories = ["共通", "銀片", "武器エレメント", "天星器", "朽ち武器", "火", "水", "土", "風", "光", "闇"];
     categories.forEach(cat => {
         let items = [];
         if(cat === "共通") items = Object.keys(needed).filter(k => commonOrder.includes(k));
-        else if(cat === "銀片") { items = sortedWeaponMaster.map(w => `spec-銀片-${w.j}`).filter(k => needed[k]); }
-        else if(cat === "武器エレメント") { items = sortedWeaponMaster.map(w => `spec-武器エレ-${w.j}`).filter(k => needed[k]); }
+        else if(cat === "銀片") items = sortedWeaponMaster.map(w => `spec-銀片-${w.j}`).filter(k => needed[k]);
+        else if(cat === "武器エレメント") items = sortedWeaponMaster.map(w => `spec-武器エレ-${w.j}`).filter(k => needed[k]);
+        else if(cat === "天星器") items = sortedWeaponMaster.map(w => `spec-天星器-${w.j}`).filter(k => needed[k]);
+        else if(cat === "朽ち武器") items = sortedWeaponMaster.map(w => `spec-朽ち武器-${w.j}`).filter(k => needed[k]);
         else items = Object.keys(needed).filter(k => k.startsWith(cat + "-"));
         
         if(items.length > 0) {
@@ -365,6 +385,8 @@ function calcT() {
                 const s = tData.stocks[k]||0; const df = needed[k]-s; let displayK = k;
                 if(k.startsWith("spec-銀片-")) { const w = charMaster.find(wm => wm.j === k.replace("spec-銀片-", "")); displayK = w ? `${w.wt}の銀片` : k; }
                 else if(k.startsWith("spec-武器エレ-")) { const w = charMaster.find(wm => wm.j === k.replace("spec-武器エレ-", "")); displayK = w ? `${w.wt}エレメント` : k; }
+                else if(k.startsWith("spec-天星器-")) { const w = charMaster.find(wm => wm.j === k.replace("spec-天星器-", "")); displayK = w ? `${w.wt} (${w.n})` : k; }
+                else if(k.startsWith("spec-朽ち武器-")) { const w = charMaster.find(wm => wm.j === k.replace("spec-朽ち武器-", "")); displayK = w ? `${w.wt}の朽ち武器` : k; }
                 else if(k.includes("-")) { displayK = k.split("-")[1]; }
                 h += `<tr class="${df<=0?'':'status-ng'}"><td>${df<=0?'✓ ':''}${displayK}</td><td style="text-align:right">${needed[k].toLocaleString()}</td><td style="text-align:right">${df<=0?'-':df.toLocaleString()}</td></tr>`;
             });
