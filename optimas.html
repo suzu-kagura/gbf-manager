@@ -12,15 +12,10 @@
         .config-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; background: #f1f5f9; padding: 20px; border-radius: 12px; }
         label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: #fff; }
-        
         .summary-info { margin-bottom: 20px; font-size: 0.95rem; color: #475569; border-left: 5px solid var(--primary); padding: 10px 15px; background: #eff6ff; border-radius: 0 8px 8px 0; }
-        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        
-        .pattern-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 18px; background: #fff; transition: transform 0.2s; }
-        .pattern-card:hover { transform: translateY(-3px); border-color: var(--primary); }
-        .pattern-title { font-weight: bold; color: var(--success); font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
-        .tag-ok { font-size: 0.7rem; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 99px; }
-        
+        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .pattern-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 18px; background: #fff; }
+        .pattern-title { font-weight: bold; color: var(--success); font-size: 0.9rem; margin-bottom: 12px; }
         .data-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px; }
         .val { font-weight: bold; }
         .highlight-sun { color: #e11d48; font-size: 1.1rem; }
@@ -75,18 +70,23 @@
         area.innerHTML = "";
         if (cur >= tar) { summary.innerText = "目標達成済みです。"; return; }
 
-        // 必要な解放回数とアニマ数
-        const stepsTo3 = Math.max(0, Math.min(3, tar) - Math.min(3, cur));
+        // --- アニマ必要数の計算 (修正版) ---
         let totalAnimaNeeded = 0;
-        if (tar >= 4 && cur < 4) totalAnimaNeeded += 1;
-        if (tar >= 5 && cur < 5) totalAnimaNeeded += 1;
-        if (tar >= 6) totalAnimaNeeded += (Math.min(tar, 10) - Math.max(cur, 5));
+        // 5凸への解放時に1個 (現在が4凸以下の時のみ。4凸時はアニマ不要)
+        if (cur < 5 && tar >= 5) totalAnimaNeeded += 1;
+        // 超越各段階で1個ずつ
+        if (tar >= 6) {
+            const transStart = Math.max(cur, 5);
+            const transEnd = Math.min(tar, 10);
+            totalAnimaNeeded += Math.max(0, transEnd - transStart);
+        }
 
-        summary.innerHTML = `必要アニマ: <b>${totalAnimaNeeded}個</b> / 3凸までの解放回数: <b>${stepsTo3}回</b>`;
+        const stepsTo3 = Math.max(0, Math.min(3, tar) - Math.min(3, cur));
+
+        summary.innerHTML = `必要アニマ: <b>${totalAnimaNeeded}個</b> (5凸用: ${cur < 5 && tar >= 5 ? 1 : 0}, 超越用: ${Math.max(0, totalAnimaNeeded - (cur < 5 && tar >= 5 ? 1 : 0))})<br>3凸までの解放回数: <b>${stepsTo3}回</b>`;
 
         let validPatternsFound = 0;
 
-        // 戦略ループ
         ['saveSun', 'saveAnima'].forEach(stratId => {
             let tempOwned = owned;
             let usedForStep = 0;
@@ -98,7 +98,6 @@
                 sunForStep = stepsTo3 - usedForStep;
             }
 
-            // 砕きパターンの取得
             const subPatterns = getCrushPatterns(tempOwned);
             
             subPatterns.forEach(p => {
@@ -111,17 +110,17 @@
                     let stratName = stratId === 'saveSun' ? "金剛節約ルート" : "アニマ確保ルート";
 
                     card.innerHTML = `
-                        <div class="pattern-title"><span>${stratName}</span> <span class="tag-ok">達成可能</span></div>
+                        <div class="pattern-title">${stratName}</div>
                         <div class="data-row"><span>素体を解放に利用:</span><span class="val">${usedForStep}枚</span></div>
                         <div class="data-row"><span>素体を砕く構成:</span><span class="val">${crushDesc}</span></div>
                         <hr>
-                        <div class="data-row"><span>解放用金剛晶:</span><span class="val">${sunForStep}個</span></div>
+                        <div class="data-row"><span>上限解放用金剛晶:</span><span class="val">${sunForStep}個</span></div>
                         <div class="data-row"><span>砕く用金剛晶:</span><span class="val">${p.sunUsed}個</span></div>
-                        <div class="data-row" style="margin-top:5px;">
+                        <div class="data-row" style="margin-top:5px; border-top: 1px dashed #eee; padding-top:5px;">
                             <span>合計金剛晶:</span><span class="val highlight-sun">${sunForStep + p.sunUsed}個</span>
                         </div>
                         <div class="data-row" style="color:#64748b; font-size:0.8rem;">
-                            <span>獲得アニマ:</span><span>${p.totalAnima} (余剰: ${p.totalAnima - totalAnimaNeeded})</span>
+                            <span>獲得アニマ:</span><span>${p.totalAnima} (必要: ${totalAnimaNeeded})</span>
                         </div>
                     `;
                     area.appendChild(card);
@@ -130,7 +129,7 @@
         });
 
         if (validPatternsFound === 0) {
-            area.innerHTML = `<div class="empty-msg">条件を満たせるパターンが見つかりませんでした。<br>素体が不足しているか、目標が高すぎます。</div>`;
+            area.innerHTML = `<div class="empty-msg">達成可能なパターンがありません。</div>`;
         }
     }
 
@@ -143,7 +142,6 @@
                 results.push({ combination: [...currentPath], totalAnima: currentAnima, sunUsed: currentSun });
                 return;
             }
-            // 0凸〜3凸にして砕く (3凸はアニマ4個。4凸以上はアニマ効率が悪いため除外)
             for (let t = 0; t <= 3; t++) {
                 let gain = (t === 3) ? 4 : t + 1;
                 currentPath.push(t === 0 ? "無凸" : t + "凸");
