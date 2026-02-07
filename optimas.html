@@ -3,30 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>神石計算機</title>
+    <title>神石超越・最適化計算機</title>
     <style>
-        :root { --primary: #2563eb; --success: #166534; --bg: #f8fafc; --card: #ffffff; }
+        :root { --primary: #2563eb; --success: #059669; --bg: #f8fafc; --card: #ffffff; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); padding: 20px; color: #334155; max-width: 900px; margin: 0 auto; }
         .card { background: var(--card); padding: 25px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         h1 { text-align: center; color: var(--primary); margin-bottom: 25px; font-size: 1.6rem; }
         .config-section { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; background: #f1f5f9; padding: 20px; border-radius: 12px; }
         label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; }
         select, input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; background: #fff; }
+        
         .summary-info { margin-bottom: 20px; font-size: 0.95rem; color: #475569; border-left: 5px solid var(--primary); padding: 10px 15px; background: #eff6ff; border-radius: 0 8px 8px 0; }
         .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .pattern-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 18px; background: #fff; }
-        .pattern-title { font-weight: bold; color: var(--success); font-size: 0.9rem; margin-bottom: 12px; }
+        
+        .pattern-card { border: 2px solid #e2e8f0; border-radius: 12px; padding: 18px; background: #fff; transition: transform 0.2s; }
+        .pattern-card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .pattern-title { font-weight: bold; color: var(--success); font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; }
+        .pattern-title::before { content: "✓"; margin-right: 8px; background: var(--success); color: white; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+        
         .data-row { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px; }
         .val { font-weight: bold; }
         .highlight-sun { color: #e11d48; font-size: 1.1rem; }
         hr { border: 0; border-top: 1px solid #f1f5f9; margin: 10px 0; }
-        .empty-msg { text-align: center; grid-column: 1 / -1; padding: 40px; color: #94a3b8; }
+        .empty-msg { text-align: center; grid-column: 1 / -1; padding: 40px; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 12px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h1>神石計算機</h1>
+    <h1>神石超越・最適化計算機</h1>
 
     <div class="config-section">
         <div class="input-item">
@@ -51,7 +56,7 @@
         </div>
         <div class="input-item">
             <label>余り素体数(無凸)</label>
-            <input type="number" id="ownedCopies" value="2" min="0">
+            <input type="number" id="ownedCopies" placeholder="0" min="0">
         </div>
     </div>
 
@@ -70,11 +75,9 @@
         area.innerHTML = "";
         if (cur >= tar) { summary.innerText = "目標達成済みです。"; return; }
 
-        // --- アニマ必要数の計算 (修正版) ---
+        // アニマ必要数 (4凸時は不要、5凸に1個、超越各段階に1個)
         let totalAnimaNeeded = 0;
-        // 5凸への解放時に1個 (現在が4凸以下の時のみ。4凸時はアニマ不要)
         if (cur < 5 && tar >= 5) totalAnimaNeeded += 1;
-        // 超越各段階で1個ずつ
         if (tar >= 6) {
             const transStart = Math.max(cur, 5);
             const transEnd = Math.min(tar, 10);
@@ -83,7 +86,7 @@
 
         const stepsTo3 = Math.max(0, Math.min(3, tar) - Math.min(3, cur));
 
-        summary.innerHTML = `必要アニマ: <b>${totalAnimaNeeded}個</b> (5凸用: ${cur < 5 && tar >= 5 ? 1 : 0}, 超越用: ${Math.max(0, totalAnimaNeeded - (cur < 5 && tar >= 5 ? 1 : 0))})<br>3凸までの解放回数: <b>${stepsTo3}回</b>`;
+        summary.innerHTML = `必要アニマ: <b>${totalAnimaNeeded}個</b> / 3凸までの解放回数: <b>${stepsTo3}回</b>`;
 
         let validPatternsFound = 0;
 
@@ -101,7 +104,8 @@
             const subPatterns = getCrushPatterns(tempOwned);
             
             subPatterns.forEach(p => {
-                if (p.totalAnima >= totalAnimaNeeded) {
+                // アニマ必要数とピッタリ一致するものだけを抽出
+                if (p.totalAnima === totalAnimaNeeded) {
                     validPatternsFound++;
                     const card = document.createElement('div');
                     card.className = 'pattern-card';
@@ -114,13 +118,10 @@
                         <div class="data-row"><span>素体を解放に利用:</span><span class="val">${usedForStep}枚</span></div>
                         <div class="data-row"><span>素体を砕く構成:</span><span class="val">${crushDesc}</span></div>
                         <hr>
-                        <div class="data-row"><span>上限解放用金剛晶:</span><span class="val">${sunForStep}個</span></div>
+                        <div class="data-row"><span>解放用金剛晶:</span><span class="val">${sunForStep}個</span></div>
                         <div class="data-row"><span>砕く用金剛晶:</span><span class="val">${p.sunUsed}個</span></div>
                         <div class="data-row" style="margin-top:5px; border-top: 1px dashed #eee; padding-top:5px;">
                             <span>合計金剛晶:</span><span class="val highlight-sun">${sunForStep + p.sunUsed}個</span>
-                        </div>
-                        <div class="data-row" style="color:#64748b; font-size:0.8rem;">
-                            <span>獲得アニマ:</span><span>${p.totalAnima} (必要: ${totalAnimaNeeded})</span>
                         </div>
                     `;
                     area.appendChild(card);
@@ -129,7 +130,7 @@
         });
 
         if (validPatternsFound === 0) {
-            area.innerHTML = `<div class="empty-msg">達成可能なパターンがありません。</div>`;
+            area.innerHTML = `<div class="empty-msg">ピッタリ必要数を満たすパターンがありません。</div>`;
         }
     }
 
@@ -142,6 +143,7 @@
                 results.push({ combination: [...currentPath], totalAnima: currentAnima, sunUsed: currentSun });
                 return;
             }
+            // 砕き時の獲得アニマ：無1、1凸2、2凸3、3凸4
             for (let t = 0; t <= 3; t++) {
                 let gain = (t === 3) ? 4 : t + 1;
                 currentPath.push(t === 0 ? "無凸" : t + "凸");
