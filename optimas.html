@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神石 計算機</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; max-width: 600px; margin: 20px auto; padding: 0 15px; background-color: #f0f2f5; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.4rem; color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+        .result-box { margin-top: 25px; padding: 20px; background-color: #fff; border: 2px solid #3498db; border-radius: 8px; }
+        .res-item { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1.1rem; }
+        .res-item b { color: #e74c3c; }
+        .note { font-size: 0.85rem; color: #7f8c8d; margin-top: 15px; border-top: 1px solid #eee; pt: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>神石限界突破 シミュレーター</h1>
+    
+    <div class="form-group">
+        <label>現在の段階</label>
+        <select id="currentStep">
+            <option value="0">0凸 (未開放)</option>
+            <option value="1">1凸</option>
+            <option value="2">2凸</option>
+            <option value="3">3凸 (SSR)</option>
+            <option value="4">4凸 (最終)</option>
+            <option value="5">5凸 (ULB)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>目標の段階</label>
+        <select id="targetStep">
+            <option value="3">3凸</option>
+            <option value="4">4凸</option>
+            <option value="5" selected>5凸</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>手持ちの素体数 (重なり分除く)</label>
+        <input type="number" id="ownedCopies" value="0" min="0">
+    </div>
+
+    <div class="result-box">
+        <div class="res-item">
+            <span>必要となる金剛晶:</span>
+            <span><b id="sunstones">0</b> 個</span>
+        </div>
+        <div class="res-item">
+            <span>必要な神石のアニマ:</span>
+            <span><b id="animas">0</b> 個</span>
+        </div>
+        <div class="res-item" style="font-size: 0.9rem; color: #666;">
+            <span>(上記アニマ用の素体消費):</span>
+            <span><span id="consumeCopies">0</span> 個</span>
+        </div>
+    </div>
+
+    <div class="note">
+        ※4凸・5凸には素体そのものは使えず、必ず「砕いてアニマにする」必要があります。<br>
+        ※この計算では、アニマ入手のために素体を優先的に消費する設定です。
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        const current = parseInt(document.getElementById('currentStep').value);
+        const target = parseInt(document.getElementById('targetStep').value);
+        let owned = parseInt(document.getElementById('ownedCopies').value) || 0;
+
+        let neededSunstones = 0;
+        let neededAnimas = 0;
+        let consumeCopies = 0;
+
+        if (current < target) {
+            // 1. まず4凸・5凸のアニマ必要数を計算
+            if (target >= 4 && current < 4) neededAnimas++;
+            if (target >= 5 && current < 5) neededAnimas++;
+
+            // アニマのために素体を砕く
+            consumeCopies = Math.min(owned, neededAnimas);
+            owned -= consumeCopies; // 砕いた分、手持ちから引く
+
+            // 2. 3凸までの解放に必要なステップを計算
+            let stepsTo3 = Math.max(0, Math.min(3, target) - current);
+            
+            // 3凸までの分を「残った素体」で補う
+            let savings = Math.min(stepsTo3, owned);
+            neededSunstones += (stepsTo3 - savings);
+
+            // 3. 4凸・5凸分の「金剛晶」必要数を加算（アニマは別途確保済み想定）
+            // 神石の4-5凸は金剛晶でも代用可能だが、通常はアニマを使うため
+            // ここでは「4凸・5凸に金剛晶を突っ込むパターン」も含めて計算
+            if (target >= 4 && current < 4) {
+                // アニマが足りない（素体がない）場合は金剛晶が必要
+                if (consumeCopies < (target >= 4 && current < 4 ? 1 : 0)) {
+                    // 実際にはアニマ＝金剛1個分の価値として計算
+                }
+            }
+            
+            // 4凸、5凸それぞれのステップで、アニマが用意できていなければ金剛晶をカウント
+            // (仕様上、アニマor金剛の選択式)
+            let extraSteps = 0;
+            if (target >= 4 && current < 4) extraSteps++;
+            if (target >= 5 && current < 5) extraSteps++;
+            
+            // アニマが用意できている分を引いた、残りの4-5凸工程
+            // 実際にはアニマがない＝金剛晶を使う、というロジック
+            // ただし、このツールでは「アニマはアニマとして表示」したほうが親切
+        }
+
+        document.getElementById('sunstones').innerText = neededSunstones;
+        document.getElementById('animas').innerText = neededAnimas;
+        document.getElementById('consumeCopies').innerText = consumeCopies;
+    }
+
+    document.querySelectorAll('input, select').forEach(el => {
+        el.addEventListener('input', calculate);
+    });
+    calculate();
+</script>
+
+</body>
+</html>
