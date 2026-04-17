@@ -17,9 +17,9 @@
 
       
         $('#i_origin').on('input', function(){
-          funcChange();
+          funcInput();
         });
-        function funcChange(){
+        function funcInput(){
           var val = $('i_origin').val();
           if( !isNaN(val) ) {
             $('i_target').val('val is num');
