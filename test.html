@@ -2,43 +2,52 @@
   <head>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script type="text/javascript">
-      <!--
+      // $(function() {...}) で囲むことで、HTML読み込み後に実行されるようになります
+      $(function() {
+        
+        // changeイベント
         $('#c_origin').on('change', function(){
           funcChange();
         });
+
         function funcChange(){
-          var val = $('c_origin').val();
-          if( !isNaN(val) ) {
-            $('c_target').val('val is num');
+          // ID指定には # が必要
+          var val = $('#c_origin').val();
+          // 未入力チェックを追加（空文字だとisNaNはfalseを返すため）
+          if( val !== "" && !isNaN(val) ) {
+            $('#c_target').val('val is num');
           } else {
-            $('c_target').val('val is not num');
+            $('#c_target').val('val is not num');
           }
         }
 
-      
+        // inputイベント
         $('#i_origin').on('input', function(){
           funcInput();
         });
+
         function funcInput(){
-          var val = $('i_origin').val();
-          if( !isNaN(val) ) {
-            $('i_target').val('val is num');
+          var val = $('#i_origin').val();
+          if( val !== "" && !isNaN(val) ) {
+            $('#i_target').val('val is num');
           } else {
-            $('i_target').val('val is not num');
+            $('#i_target').val('val is not num');
           }
         }
-      -->
+
+      });
     </script>
   </head>
   <body>
     <div class="eve_change">
-      changeイベント確認<br/>
+      changeイベント確認（フォーカスが外れた時に確定）<br/>
       <input type="text" id="c_origin">
       <br/>
       <input type="text" id="c_target">
     </div>
+    <br/>
     <div class="eve_change">
-      inputイベント確認<br/>
+      inputイベント確認（入力するたびに判定）<br/>
       <input type="text" id="i_origin">
       <br/>
       <input type="text" id="i_target">
