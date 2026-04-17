@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <script type="text/javascript">
+      <!--
+        $('#c_origin').on('change', function(){
+          funcChange();
+        });
+        function funcChange(){
+          var val = $('c_origin').val();
+          if( !isNaN(val) ) {
+            $('c_target').val('val is num');
+          } else {
+            $('c_target').val('val is not num');
+          }
+        }
+
+      
+        $('#i_origin').on('input', function(){
+          funcChange();
+        });
+        function funcChange(){
+          var val = $('i_origin').val();
+          if( !isNaN(val) ) {
+            $('i_target').val('val is num');
+          } else {
+            $('i_target').val('val is not num');
+          }
+        }
+      -->
+    </script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+  </head>
+  <body>
+    <div class="eve_change">
+      changeイベント確認<br/>
+      <input type="text" id="c_origin">
+      <br/>
+      <input type="text" id="c_target">
+    </div>
+    <div class="eve_change">
+      inputイベント確認<br/>
+      <input type="text" id="i_origin">
+      <br/>
+      <input type="text" id="i_target">
+    </div>
+  </body>
+</html>
